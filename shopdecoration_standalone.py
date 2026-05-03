@@ -22,6 +22,9 @@ def run_shop(screen, font, coins, purchased_decorations):     # display shop win
 
     back_button = draw_button(screen, font, "Back", 300, 400, 100, 50)                                  # createa button labelled back # position 300, 400 # size 100, 50 # exit the shop button
 
+# show coin balance at top
+coin_text = font.render(f"coins: {coins}", true, (255, 255, 255))
+screen.blit(coin_text, (20, 20))
 
 
 
