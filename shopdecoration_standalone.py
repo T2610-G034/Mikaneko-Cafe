@@ -14,6 +14,15 @@ def draw_button(screen, font, text, x, y, w, h):              # x,y: position of
     screen.blit(label, (x+10, y+10))                          # makes the text centered inside button
     return rect                                               # clickable
 
+def run_shop(screen, font, coins, purchased_decorations):     # display shop window and purchasing
+     deco_buttons = []
+     for i, (name, cost, pos, color) in enumerate(decorations):                                         # loops thru decorations list
+          rect = draw_button(screen, font, f"{name} = {coins} coins", 200, 100 + i*60, 300, 50)         
+          deco_buttons.append((rect, name, cost, pos, color))                                           # stores button rectangle + item info in deco buttons
+
+    back_button = draw_button(screen, font, "Back", 300, 400, 100, 50)                                  # createa button labelled back # position 300, 400 # size 100, 50 # exit the shop button
+
+
 
 
 
