@@ -67,7 +67,7 @@ while running:
     #---draw buttons---
     for drink in drinks:
         pygame.draw.rect(screen, (180, 220, 180), (50, drink.pos_y, 200, 50))
-        screen.blit(font.render(f"Unlock {drink.name}", True, (0, 0, 0)), (280, drink.pos_y + 10))
+        screen.blit(font.render(f"Unlock {drink.name}", True, (0, 0, 0)), (60, drink.pos_y + 10))
 
         pygame.draw.rect(screen, (200, 180, 220), (270, drink.pos_y, 200, 50))
         screen.blit(font.render(f"Serve {drink.name}", True, (0, 0, 0)), (280, drink.pos_y + 10))
