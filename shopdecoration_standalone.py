@@ -39,7 +39,8 @@ def run_shop(screen, font, coins, purchased_decorations):     # display shop win
                      if coins >= cost and name not in purchased_decorations:               # player has enough coins, items havent buy yet, subtract cost from coins
                          coins -= cost
                          purchased_decorations.append(name)                              # adds item tu purchased list
-                         print(f"Purchased {name}!")                                     # show a message
+                         message = font.render(f"Purchased {name}!", True, (255, 255, 255))  
+                         screen.blit(message, (200, 350))                                 # show a message
                      else:
                         print("Not enough coins or already purchased!")
              if back_button.collidepoint(event.pos):                                        # if back button clicks, return coins, purchased items
