@@ -14,7 +14,7 @@ def draw_button(screen, font, text, x, y, w, h):              # x,y: position of
     screen.blit(label, (x+10, y+10))                          # makes the text centered inside button
     return rect                                               # clickable
 
-def run_shop(screen, font, coins, purchased_decorations):     # display shop window and purchasing
+def run_shop(screen, font, coins, purchased_decorations, current_message):     # display shop window and purchasing
      deco_buttons = []
      for i, (name, cost, pos, color) in enumerate(decorations):                                         # loops thru decorations list
           rect = draw_button(screen, font, f"{name} = {coins} coins", 200, 100 + i*60, 300, 50)         
@@ -32,20 +32,22 @@ def run_shop(screen, font, coins, purchased_decorations):     # display shop win
 
      for event in pygame.event.get():                                                   # event loop section
          if event.type == pygame.QUIT:                                                  # sends back current coin count, purcahsed items # stop running the shop
-             return coins, purchased_decorations, False
+             return coins, purchased_decorations, current_message, False
          if event.type == pygame.MOUSEBUTTONDOWN:                                            # checks if press mouse button
              for rect, name, cost, pos, color in deco_buttons:                              # each button has clickable rectangle, item name, cost of the item, pos: where to draw after purchase, color of rectangle
                  if rect.collidepoint(event.pos):                                          # check if the mouse click is in the button
                      if coins >= cost and name not in purchased_decorations:               # player has enough coins, items havent buy yet, subtract cost from coins
                          coins -= cost
                          purchased_decorations.append(name)                              # adds item tu purchased list
-                         message = font.render(f"Purchased {name}!", True, (255, 255, 255))  
-                         screen.blit(message, (200, 350))                                 # show a message
+                         current_message = f"Purchased {name}!"                                # show a message
                      else:
-                        message = font.render(f"Not enough coins or already purchased!", True, (255, 255, 255))
-                        screen.blit(message, (200, 350))
+                        current_message = "Not enough coins or already purchased!"
              if back_button.collidepoint(event.pos):                                        # if back button clicks, return coins, purchased items
-                 return coins, purchased_decorations, False                                # exit the shop
+                 return coins, purchased_decorations, False  
+             
+     if current_message:
+         msg = font.render(current_message, True, (255, 255, 255))   
+         screen.blit(msg, (200, 350))                                                          
           
      return coins, purchased_decorations, True
 
@@ -57,13 +59,14 @@ if __name__ == "__main__":                                                     #
      screen = pygame.display.set_mode((700, 500))
      font = pygame.font.SysFont(None, 19)
 
-     coins = 500
-     purchased_decorations = []                                                 # empty list
+     coins = 1000
+     purchased_decorations = []   
+     current_message = ""                                                       # empty list
      in_shop = True                                                             # shop currently open
 
      while in_shop:
           screen.fill((50, 50, 50))                                                                                 # background colour - dark gray
-          coins, purchased_decorations, in_shop = run_shop(screen, font, coins, purchased_decorations)              # run_shop function
+          coins, purchased_decorations, current_message, in_shop = run_shop(screen, font, coins, purchased_decorations, current_message)              # run_shop function
           pygame.display.flip()                                                  # to see changes
 
 pygame.quit()
