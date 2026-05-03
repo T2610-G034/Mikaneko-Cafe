@@ -42,7 +42,7 @@ def run_shop(screen, font, coins, purchased_decorations):     # display shop win
                          message = font.render(f"Purchased {name}!", True, (255, 255, 255))  
                          screen.blit(message, (200, 350))                                 # show a message
                      else:
-                        message = font.render(f"Not enough coins or already purchased!", True (255, 255, 255))
+                        message = font.render(f"Not enough coins or already purchased!", True, (255, 255, 255))
                         screen.blit(message, (200, 350))
              if back_button.collidepoint(event.pos):                                        # if back button clicks, return coins, purchased items
                  return coins, purchased_decorations, False                                # exit the shop
