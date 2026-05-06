@@ -155,5 +155,5 @@ def main():
         pygame.display.flip()
         clock.tick(FPS)
 
-if _name_ == "_main_":
+if __name__ == "_main_":
     main()
