@@ -17,7 +17,7 @@ def main():
     pygame.display.set_caption("Mika Neko Cafe")
     clock = pygame.time.Clock()
     try:
-        pygame.mixer.music.load("background.mp3") 
+        pygame.mixer.music.load("music.mp3") 
         pygame.mixer.music.play(-1)
     except:
         print("Music file not found, continuing without audio.")
