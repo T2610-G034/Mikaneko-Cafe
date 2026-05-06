@@ -12,7 +12,7 @@ BROWN       = (101, 67, 33)
 WHITE       = (255, 255, 255)
 
 class MenuButton:
-    def __init__(self, x, y, w, h, text):
+    def _init_(self, x, y, w, h, text):
         self.rect = pygame.Rect(x, y, w, h)
         self.text = text
         self.color = WHITE
@@ -98,5 +98,5 @@ def main():
         pygame.display.flip()
         clock.tick(FPS)
 
-if __name__ == "__main__":
+if _name_ == "_main_":
     main()
