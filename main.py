@@ -132,9 +132,23 @@ def main():
                 pygame.mouse.set_visible(True)
 
         elif state == "SETTINGS":
-            pygame.mouse.set_visible(True); screen.fill(PASTEL_PINK)
-            btn_music.draw(screen, font); btn_vol_down.draw(screen, font); btn_vol_up.draw(screen, font); btn_set_back.draw(screen, font)
-
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK)
+            
+            # Draw the title
+            set_title = title_font.render("Settings", True, BROWN)
+            screen.blit(set_title, (CX - set_title.get_width()//2, 80))
+            
+            # Draw the control buttons
+            btn_music.draw(screen, font)
+            btn_vol_down.draw(screen, font)
+            btn_vol_up.draw(screen, font)
+            btn_set_back.draw(screen, font)
+            
+            # --- THE MISSING PART: Draw the Volume Percentage ---
+            vol_label = font.render(f"VOLUME: {volume}%", True, BROWN)
+            screen.blit(vol_label, (CX - vol_label.get_width()//2, CY + 65))
+            
         elif state == "SHOP":
             pygame.mouse.set_visible(True); screen.fill(PASTEL_PINK)
             btn_shop_back.draw(screen, font)
