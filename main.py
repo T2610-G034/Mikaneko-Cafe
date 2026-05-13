@@ -19,11 +19,21 @@ def main():
     pygame.display.set_caption("Mika Neko Cafe")
     clock = pygame.time.Clock()
     
+    # Load Music
     try:
         pygame.mixer.music.load("music.mp3") 
         pygame.mixer.music.play(-1)
     except:
         print("Music file not found, continuing without audio.")
+
+    # Load Custom Cursor for the Tap Button
+    # Replace 'cursor_hand.png' with your actual image file path
+    try:
+        cursor_img = pygame.image.load("cursor_hand.png").convert_alpha()
+        cursor_img = pygame.transform.scale(cursor_img, (40, 40))
+    except:
+        cursor_img = None
+        print("Cursor image not found.")
 
     font = pygame.font.SysFont("Arial", 30, bold=True)
     title_font = pygame.font.SysFont("Arial", 100, bold=True)
@@ -59,13 +69,13 @@ def main():
 
     while True:
         mouse_pos = pygame.mouse.get_pos()
+        is_hovering_tap = False # Track hover state for cursor
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit(); sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                # 1. MENU STATE EVENTS
                 if state == "MENU":
                     if btn_start.is_clicked(mouse_pos): 
                         state = "GAME"
@@ -74,7 +84,6 @@ def main():
                     elif btn_quit.is_clicked(mouse_pos): 
                         pygame.quit(); sys.exit()
                 
-                # 2. GAME STATE EVENTS
                 elif state == "GAME":
                     if btn_game_back.is_clicked(mouse_pos): 
                         state = "MENU"
@@ -83,25 +92,23 @@ def main():
                     elif btn_tap.is_clicked(mouse_pos): 
                         engine.add_click()
 
-                # 3. SETTINGS STATE EVENTS
                 elif state == "SETTINGS":
                     if btn_set_back.is_clicked(mouse_pos): 
                         state = "MENU"
-                    if btn_music.is_clicked(mouse_pos):
+                    elif btn_music.is_clicked(mouse_pos):
                         if btn_music.text == "MUSIC: ON":
                             btn_music.text = "MUSIC: OFF"
                             pygame.mixer.music.pause()
                         else:
                             btn_music.text = "MUSIC: ON"
                             pygame.mixer.music.unpause()
-                    if btn_vol_up.is_clicked(mouse_pos):
+                    elif btn_vol_up.is_clicked(mouse_pos):
                         volume = min(100, volume + 10)
                         pygame.mixer.music.set_volume(volume / 100)
-                    if btn_vol_down.is_clicked(mouse_pos):
+                    elif btn_vol_down.is_clicked(mouse_pos):
                         volume = max(0, volume - 10)
                         pygame.mixer.music.set_volume(volume / 100)
 
-                # 4. SHOP STATE EVENTS
                 elif state == "SHOP":
                     if btn_shop_back.is_clicked(mouse_pos): 
                         state = "GAME"
@@ -111,6 +118,7 @@ def main():
 
         # --- DRAWING ---
         if state == "MENU":
+            pygame.mouse.set_visible(True)
             screen.fill(PASTEL_PINK)
             title_surf = title_font.render("Mika Neko Cafe", True, BROWN)
             screen.blit(title_surf, (CX - title_surf.get_width()//2, 100))
@@ -123,9 +131,9 @@ def main():
             btn_game_back.draw(screen, font)
             btn_open_shop.draw(screen, font)
             
-            # Draw Owned Items in the Cafe
+            # Draw Owned Items
             for name, data in engine.shop_items.items():
-                if data[2] > 0: # If owned
+                if data[2] > 0:
                     pygame.draw.circle(screen, data[4], data[3], 40)
                     pygame.draw.circle(screen, BROWN, data[3], 40, 3)
                     label = font.render(name, True, WHITE)
@@ -135,7 +143,15 @@ def main():
             counter_txt = font.render(f"Mao-Maos: {engine.mao_mao}", True, WHITE)
             screen.blit(counter_txt, (CX - counter_txt.get_width()//2, 100))
 
+            # Hover Logic for Custom Cursor
+            if btn_tap.rect.collidepoint(mouse_pos):
+                is_hovering_tap = True
+                pygame.mouse.set_visible(False)
+            else:
+                pygame.mouse.set_visible(True)
+
         elif state == "SETTINGS":
+            pygame.mouse.set_visible(True)
             screen.fill(PASTEL_PINK)
             set_title = title_font.render("Settings", True, BROWN)
             screen.blit(set_title, (CX - set_title.get_width()//2, 80))
@@ -147,23 +163,25 @@ def main():
             screen.blit(vol_label, (CX - vol_label.get_width()//2, CY + 65))
 
         elif state == "SHOP":
+            pygame.mouse.set_visible(True)
             screen.fill(PASTEL_PINK)
             btn_shop_back.draw(screen, font)
             money_txt = font.render(f"Mao-Maos: {engine.mao_mao}", True, BROWN)
             screen.blit(money_txt, (CX - money_txt.get_width()//2, 150))
             
             for name, btn in item_buttons.items():
-                price = engine.shop_items[name][0]
-                owned = engine.shop_items[name][2]
-                
+                price, benefit, owned, pos, color = engine.shop_items[name]
                 if owned > 0:
                     btn.text = f"{name}: SOLD OUT"
                     btn.color = (200, 200, 200) 
                 else:
                     btn.text = f"{name}: {price} M"
                     btn.color = (255, 255, 255)
-                
                 btn.draw(screen, font)
+
+        # Draw Custom Cursor at the very end
+        if state == "GAME" and is_hovering_tap and cursor_img:
+            screen.blit(cursor_img, (mouse_pos[0] - 20, mouse_pos[1] - 20))
 
         pygame.display.flip()
         clock.tick(FPS)
