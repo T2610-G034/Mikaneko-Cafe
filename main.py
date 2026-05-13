@@ -1,11 +1,10 @@
 import pygame
 import sys
-import os  # ADDED: This helps find your files
+import os
 from sprites import MenuButton
 from game_logic import GameEngine
 
 # --- FILE PATH FIX ---
-# This finds the folder where this script is saved
 BASE_PATH = os.path.dirname(os.path.abspath(__file__))
 
 def get_path(filename):
@@ -15,10 +14,11 @@ def get_path(filename):
 # CONFIGURATION
 WIDTH, HEIGHT = 1280, 720
 FPS = 60
-PASTEL_PINK = (255, 220, 230)
-GREEN_CAFE  = (34, 139, 34)
-WHITE       = (255, 255, 255)
-BROWN       = (101, 67, 33)
+PASTEL_PINK   = (255, 220, 230)
+PASTEL_BLUE   = (230, 240, 255)
+GREEN_CAFE    = (34, 139, 34)
+WHITE         = (255, 255, 255)
+BROWN         = (101, 67, 33)
 
 def main():
     pygame.init()
@@ -28,22 +28,20 @@ def main():
     pygame.display.set_caption("Mika Neko Cafe")
     clock = pygame.time.Clock()
     
-    # --- MUSIC LOAD (Using Absolute Path) ---
+    # --- ASSETS ---
     music_playing = False
     try:
         pygame.mixer.music.load(get_path("music.mp3")) 
         pygame.mixer.music.play(-1)
         music_playing = True
     except Exception as e:
-        print(f"Music Error: {e}. Searched at: {get_path('music.mp3')}")
+        print(f"Music Error: {e}")
 
-    # --- CURSOR LOAD (Using Absolute Path) ---
     try:
         cursor_img = pygame.image.load(get_path("cursor_hand.png")).convert_alpha()
         cursor_img = pygame.transform.scale(cursor_img, (50, 50))
     except Exception as e:
         cursor_img = None
-        print(f"Cursor Error: {e}. Searched at: {get_path('cursor_hand.png')}")
 
     font = pygame.font.SysFont("Arial", 30, bold=True)
     title_font = pygame.font.SysFont("Arial", 100, bold=True)
@@ -54,27 +52,47 @@ def main():
     pygame.mixer.music.set_volume(volume / 100)
     
     CX, CY = WIDTH // 2, HEIGHT // 2
+    last_time = pygame.time.get_ticks()
 
     # --- BUTTONS ---
-    btn_start    = MenuButton(CX - 150, CY - 100, 300, 80, "START GAME")
-    btn_settings = MenuButton(CX - 150, CY + 10, 300, 80, "SETTINGS")
-    btn_quit     = MenuButton(CX - 150, CY + 120, 300, 80, "QUIT")
-    btn_game_back = MenuButton(20, 20, 150, 50, "MENU")
-    btn_open_shop = MenuButton(WIDTH - 220, 20, 200, 50, "OPEN SHOP", (255, 182, 193))
-    btn_tap       = MenuButton(CX - 150, HEIGHT - 150, 300, 100, "TAP FOR MAO-MAO", (218, 165, 32))
-    btn_set_back = MenuButton(20, 20, 150, 50, "BACK")
-    btn_music    = MenuButton(CX - 150, CY - 80, 300, 80, "MUSIC: ON")
-    btn_vol_down = MenuButton(CX - 240, CY + 40, 80, 80, "-")
-    btn_vol_up   = MenuButton(CX + 160, CY + 40, 80, 80, "+")
-    btn_shop_back = MenuButton(20, 20, 150, 50, "BACK")
+    # Global/Menu Buttons
+    btn_start      = MenuButton(CX - 150, CY - 100, 300, 80, "START GAME")
+    btn_settings   = MenuButton(CX - 150, CY + 10, 300, 80, "SETTINGS")
+    btn_quit       = MenuButton(CX - 150, CY + 120, 300, 80, "QUIT")
+    btn_back_to_menu = MenuButton(20, 20, 150, 50, "MENU")
+    
+    # Game Screen Buttons
+    btn_open_furn   = MenuButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
+    btn_open_cats   = MenuButton(WIDTH - 220, 85, 200, 50, "CATS", (173, 216, 230))
+    btn_tap         = MenuButton(CX - 150, HEIGHT - 150, 300, 100, "TAP FOR MAO-MAO", (218, 165, 32))
+    
+    # Settings Buttons
+    btn_set_back   = MenuButton(20, 20, 150, 50, "BACK")
+    btn_music      = MenuButton(CX - 150, CY - 80, 300, 80, "MUSIC: ON")
+    btn_vol_down   = MenuButton(CX - 240, CY + 40, 80, 80, "-")
+    btn_vol_up     = MenuButton(CX + 160, CY + 40, 80, 80, "+")
 
-    item_buttons = {}
-    for i, item_name in enumerate(engine.shop_items):
-        item_buttons[item_name] = MenuButton(CX - 250, 220 + (i * 90), 500, 70, item_name)
+    # Shop Navigation
+    btn_shop_back  = MenuButton(20, 20, 150, 50, "BACK")
+
+    # Dynamic Shop Buttons
+    furn_buttons = {}
+    for i, name in enumerate(engine.furniture_items):
+        furn_buttons[name] = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
+
+    cat_buttons = {}
+    for i, name in enumerate(engine.cat_items):
+        cat_buttons[name] = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
 
     is_hovering_tap = False
 
     while True:
+        # Time tracking for passive income
+        t = pygame.time.get_ticks()
+        dt = t - last_time
+        last_time = t
+        engine.update_passive(dt)
+
         mouse_pos = pygame.mouse.get_pos()
         is_hovering_tap = False 
 
@@ -87,25 +105,35 @@ def main():
                     if btn_start.is_clicked(mouse_pos): state = "GAME"
                     elif btn_settings.is_clicked(mouse_pos): state = "SETTINGS"
                     elif btn_quit.is_clicked(mouse_pos): pygame.quit(); sys.exit()
+                
                 elif state == "GAME":
-                    if btn_game_back.is_clicked(mouse_pos): state = "MENU"
-                    elif btn_open_shop.is_clicked(mouse_pos): state = "SHOP"
+                    if btn_back_to_menu.is_clicked(mouse_pos): state = "MENU"
+                    elif btn_open_furn.is_clicked(mouse_pos): state = "FURN_SHOP"
+                    elif btn_open_cats.is_clicked(mouse_pos): state = "CAT_SHOP"
                     elif btn_tap.is_clicked(mouse_pos): engine.add_click()
+                
                 elif state == "SETTINGS":
                     if btn_set_back.is_clicked(mouse_pos): state = "MENU"
                     elif btn_music.is_clicked(mouse_pos):
+                        music_playing = not music_playing
                         if music_playing:
-                            pygame.mixer.music.pause(); btn_music.text = "MUSIC: OFF"; music_playing = False
+                            pygame.mixer.music.unpause(); btn_music.text = "MUSIC: ON"
                         else:
-                            pygame.mixer.music.unpause(); btn_music.text = "MUSIC: ON"; music_playing = True
+                            pygame.mixer.music.pause(); btn_music.text = "MUSIC: OFF"
                     elif btn_vol_up.is_clicked(mouse_pos):
                         volume = min(100, volume + 10); pygame.mixer.music.set_volume(volume/100)
                     elif btn_vol_down.is_clicked(mouse_pos):
                         volume = max(0, volume - 10); pygame.mixer.music.set_volume(volume/100)
-                elif state == "SHOP":
+                
+                elif state == "FURN_SHOP":
                     if btn_shop_back.is_clicked(mouse_pos): state = "GAME"
-                    for name, btn in item_buttons.items():
-                        if btn.is_clicked(mouse_pos): engine.buy_item(name)
+                    for name, btn in furn_buttons.items():
+                        if btn.is_clicked(mouse_pos): engine.buy_item(name, "furniture")
+                
+                elif state == "CAT_SHOP":
+                    if btn_shop_back.is_clicked(mouse_pos): state = "GAME"
+                    for name, btn in cat_buttons.items():
+                        if btn.is_clicked(mouse_pos): engine.buy_item(name, "cats")
 
         # --- DRAWING ---
         if state == "MENU":
@@ -117,44 +145,52 @@ def main():
         
         elif state == "GAME":
             screen.fill(GREEN_CAFE)
-            btn_game_back.draw(screen, font)
-            btn_open_shop.draw(screen, font)
-            for name, data in engine.shop_items.items():
-                if data[2] > 0:
-                    pygame.draw.circle(screen, data[4], data[3], 40)
-                    pygame.draw.circle(screen, BROWN, data[3], 40, 3)
+            btn_back_to_menu.draw(screen, font)
+            btn_open_furn.draw(screen, font)
+            btn_open_cats.draw(screen, font)
+            
+            # Draw owned furniture/cats
+            for shop in [engine.furniture_items, engine.cat_items]:
+                for name, data in shop.items():
+                    if data[2] > 0: # If owned
+                        pygame.draw.circle(screen, data[4], data[3], 40)
+                        pygame.draw.circle(screen, BROWN, data[3], 40, 3)
+            
             btn_tap.draw(screen, font)
-            counter_txt = font.render(f"Mao-Maos: {engine.mao_mao}", True, WHITE)
+            counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, WHITE)
             screen.blit(counter_txt, (CX - counter_txt.get_width()//2, 100))
+            
             if btn_tap.rect.collidepoint(mouse_pos):
                 is_hovering_tap = True; pygame.mouse.set_visible(False)
             else:
                 pygame.mouse.set_visible(True)
 
         elif state == "SETTINGS":
-            pygame.mouse.set_visible(True)
-            screen.fill(PASTEL_PINK)
-            
-            # Draw the title
+            pygame.mouse.set_visible(True); screen.fill(PASTEL_PINK)
             set_title = title_font.render("Settings", True, BROWN)
             screen.blit(set_title, (CX - set_title.get_width()//2, 80))
-            
-            # Draw the control buttons
-            btn_music.draw(screen, font)
-            btn_vol_down.draw(screen, font)
-            btn_vol_up.draw(screen, font)
-            btn_set_back.draw(screen, font)
-            
-            # --- THE MISSING PART: Draw the Volume Percentage ---
+            btn_music.draw(screen, font); btn_vol_down.draw(screen, font); btn_vol_up.draw(screen, font); btn_set_back.draw(screen, font)
             vol_label = font.render(f"VOLUME: {volume}%", True, BROWN)
             screen.blit(vol_label, (CX - vol_label.get_width()//2, CY + 65))
             
-        elif state == "SHOP":
+        elif state == "FURN_SHOP":
             pygame.mouse.set_visible(True); screen.fill(PASTEL_PINK)
+            shop_title = title_font.render("Furniture", True, BROWN)
+            screen.blit(shop_title, (CX - shop_title.get_width()//2, 50))
             btn_shop_back.draw(screen, font)
-            for name, btn in item_buttons.items():
-                price, benefit, owned, pos, color = engine.shop_items[name]
+            for name, btn in furn_buttons.items():
+                price, benefit, owned, pos, color = engine.furniture_items[name]
                 btn.text = f"{name}: SOLD OUT" if owned > 0 else f"{name}: {price} M"
+                btn.draw(screen, font)
+
+        elif state == "CAT_SHOP":
+            pygame.mouse.set_visible(True); screen.fill(PASTEL_BLUE)
+            shop_title = title_font.render("Cat Adoption", True, BROWN)
+            screen.blit(shop_title, (CX - shop_title.get_width()//2, 50))
+            btn_shop_back.draw(screen, font)
+            for name, btn in cat_buttons.items():
+                price, benefit, owned, pos, color = engine.cat_items[name]
+                btn.text = f"{name}: ADOPTED" if owned > 0 else f"{name}: {price} M"
                 btn.draw(screen, font)
 
         # --- FINAL CURSOR DRAW ---
