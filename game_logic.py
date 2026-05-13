@@ -1,34 +1,52 @@
+import pygame
+import os
+
+# --- Path Helper ---
+BASE_PATH = os.path.dirname(os.path.abspath(__file__))
+
+def get_path(filename):
+    return os.path.join(BASE_PATH, filename)
+
 class GameEngine:
     def __init__(self):
         self.mao_mao = 0
         self.click_value = 1 
         
-        # Shop Data: [Price, (Unused Benefit), Owned, (x, y) Position, Color]
+        # Shop Data: [Price, (Unused) Benefit, Owned, (x, y) Position, Image_Surface]
         self.furniture_items = {
-            "CAT BED": [150, 0, 0, (400, 300), (255, 255, 255)],
-            "PLANT": [250, 0, 0, (800, 350), (210, 180, 140)],
+            "CAT BED": [15, 0, 0, (400, 600), self.load_img("cat_bed.png", (100, 80))], 
+            "PLANT":   [25, 0, 0, (160, 530), self.load_img("plant.png", (60, 100))],
         }
 
         self.cat_items = {
-            "COOKIE CAT": [100, 0, 0, (200, 500), (255, 165, 0)],
-            "VANILLA CAT": [250, 0, 0, (1000, 500), (240, 240, 240)],
+            "COOKIE CAT":  [10, 0, 0, (200, 620), self.load_img("cookie_cat.png", (90, 90))],
+            "VANILLA CAT": [25, 0, 0, (900, 620), self.load_img("vanilla_cat.png", (90, 90))],
         }
 
+    def load_img(self, filename, size):
+        """Loads, optimizes, and scales images for the main loop."""
+        try:
+            path = get_path(filename)
+            img = pygame.image.load(path).convert_alpha()
+            return pygame.transform.scale(img, size)
+        except Exception as e:
+            print(f"Could not load {filename}: {e}")
+            # Placeholder surface if image is missing
+            surf = pygame.Surface(size)
+            surf.fill((255, 192, 203)) 
+            return surf
+
     def add_click(self):
-        # Always increases by 1 now
+        """Increases currency via manual clicks."""
         self.mao_mao += self.click_value 
 
-    def update_passive(self, dt):
-        pass
-
     def buy_item(self, item_name, shop_type="furniture"):
+        """Handles the transaction logic."""
         shop = self.furniture_items if shop_type == "furniture" else self.cat_items
         item = shop[item_name]
-        price = item[0]
-        owned = item[2]
         
-        if self.mao_mao >= price and owned < 1:
-            self.mao_mao -= price
-            shop[item_name][2] = 1  # Mark as owned so it draws on screen
+        if self.mao_mao >= item[0] and item[2] < 1:
+            self.mao_mao -= item[0]
+            item[2] = 1 
             return True
         return False
