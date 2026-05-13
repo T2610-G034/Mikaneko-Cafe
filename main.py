@@ -87,12 +87,7 @@ def main():
     is_hovering_tap = False
 
     while True:
-        # Time tracking for passive income
-        t = pygame.time.get_ticks()
-        dt = t - last_time
-        last_time = t
-        engine.update_passive(dt)
-
+       
         mouse_pos = pygame.mouse.get_pos()
         is_hovering_tap = False 
 
