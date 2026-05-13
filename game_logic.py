@@ -2,26 +2,43 @@ class GameEngine:
     def __init__(self):
         self.mao_mao = 0
         self.click_value = 1 
+        self.passive_income = 0  # <--- Make sure this is here
         
-        # Shop Data: { "Item Name": [Price, Benefit, Quantity, (x, y) Position, Color] }
-        self.shop_items = {
+        # Furniture Shop Data
+        self.furniture_items = {
             "CAT BED": [150, 1, 0, (400, 300), (255, 255, 255)],
             "PLANT": [250, 5, 0, (800, 350), (210, 180, 140)],
-            "SCRATCHING POST": [500, 25, 0, (600, 200), (255, 215, 0)]
+        }
+
+        # Cat Shop Data
+        self.cat_items = {
+            "COOKIE CAT": [100, 50, 0, (200, 500), (255, 165, 0)],
+            "VANILLA CAT": [250, 150, 0, (1000, 500), (50, 50, 50)],
         }
 
     def add_click(self):
         self.mao_mao += self.click_value 
 
-    def buy_item(self, item_name):
-        item = self.shop_items[item_name]
-        price = item[0]
-        quantity = item[2]
+    # --- THIS IS THE MISSING METHOD FOR LINE 94 ---
+    def update_passive(self, dt):
+        """Adds passive income based on time passed (dt is in milliseconds)"""
+        # Calculate passive income based on owned cats/furniture if you like
+        # For now, it just adds the total passive_income divided by time
+        self.mao_mao += (self.passive_income * dt) / 1000
+
+    def buy_item(self, item_name, shop_type="furniture"):
+        shop = self.furniture_items if shop_type == "furniture" else self.cat_items
+        item = shop[item_name]
+        price, benefit, owned = item[0], item[1], item[2]
         
-        # Only allow purchase if they have enough money AND don't own it yet
-        if self.mao_mao >= price and quantity < 1:
+        if self.mao_mao >= price and owned < 1:
             self.mao_mao -= price
-            self.click_value += item[1]
-            self.shop_items[item_name][2] = 1 
+            shop[item_name][2] = 1 
+            
+            # If it's a cat, maybe it adds passive income instead of click power!
+            if shop_type == "cats":
+                self.passive_income += benefit
+            else:
+                self.click_value += benefit
             return True
         return False
