@@ -1,11 +1,12 @@
 import pygame
+from settings import BROWN
 
 class MenuButton:
     def __init__(self, x, y, w, h, text, color=(255, 255, 255)):
         self.rect = pygame.Rect(x, y, w, h)
         self.text = text
         self.color = color
-        self.brown = (101, 67, 33)
+        self.brown = BROWN
 
     def draw(self, screen, font):
         # 3D Shadow
