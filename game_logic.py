@@ -1,11 +1,5 @@
 import pygame
-import os
-
-# --- Path Helper ---
-BASE_PATH = os.path.dirname(os.path.abspath(__file__))
-
-def get_path(filename):
-    return os.path.join(BASE_PATH, filename)
+from path_helper import get_path
 
 class GameEngine:
     def __init__(self):
