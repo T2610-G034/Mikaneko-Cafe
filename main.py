@@ -1,10 +1,9 @@
 import pygame
 import sys
-import asset_loader
 from settings import *
 from sprites import MenuButton
 from game_logic import GameEngine
-from asset_loader import load_visual_assets
+import asset_loader
 
 def main():
     pygame.init()
@@ -39,8 +38,8 @@ def main():
     btn_open_furn    = MenuButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
     btn_open_cats    = MenuButton(WIDTH - 220, 85, 200, 50, "CATS", (173, 216, 230))
     
-    btn_go_kitchen   = MenuButton(20, 90, 220, 50, "GO TO KITCHEN", GOLD)
-    btn_leave_kitchen = MenuButton(20, 20, 220, 50, "LEAVE KITCHEN", (200, 100, 100))
+    btn_go_kitchen   = MenuButton(20, 90, 220, 50, "KITCHEN", GOLD)
+    btn_leave_kitchen = MenuButton(20, 20, 220, 50, "LEAVE", (200, 100, 100))
     
     btn_set_back     = MenuButton(20, 20, 150, 50, "BACK")
     btn_music        = MenuButton(CX - 150, CY - 80, 300, 80, f"MUSIC: {'ON' if music_playing else 'OFF'}")
@@ -59,65 +58,79 @@ def main():
                 pygame.quit(); sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if state == "MENU":
-                    if btn_start.is_clicked(mouse_pos): state = "GAME"
-                    elif btn_settings.is_clicked(mouse_pos): state = "SETTINGS"
-                    elif btn_quit.is_clicked(mouse_pos): pygame.quit(); sys.exit()
-                
-                elif state == "GAME":
-                    if btn_back_to_menu.is_clicked(mouse_pos): state = "MENU"
-                    elif btn_open_furn.is_clicked(mouse_pos): state = "FURN_SHOP"
-                    elif btn_open_cats.is_clicked(mouse_pos): state = "CAT_SHOP"
-                    elif btn_go_kitchen.is_clicked(mouse_pos): state = "KITCHEN"
-                
-                elif state == "KITCHEN":
-                    if btn_leave_kitchen.is_clicked(mouse_pos):
-                        state = "GAME"
-                        cursor_state = "DEFAULT"
-                        placed_drink_on_counter = None
+                if event.button == 1: # Left Click Down
+                    if state == "MENU":
+                        if btn_start.is_clicked(mouse_pos): state = "GAME"
+                        elif btn_settings.is_clicked(mouse_pos): state = "SETTINGS"
+                        elif btn_quit.is_clicked(mouse_pos): pygame.quit(); sys.exit()
+                    
+                    elif state == "GAME":
+                        if btn_back_to_menu.is_clicked(mouse_pos): state = "MENU"
+                        elif btn_open_furn.is_clicked(mouse_pos): state = "FURN_SHOP"
+                        elif btn_open_cats.is_clicked(mouse_pos): state = "CAT_SHOP"
+                        elif btn_go_kitchen.is_clicked(mouse_pos): state = "KITCHEN"
+                        else:
+                            # Added: Evaluate cat object selection if UI button was missed
+                            engine.handle_mouse_down(mouse_pos)
+                    
+                    elif state == "KITCHEN":
+                        if btn_leave_kitchen.is_clicked(mouse_pos):
+                            state = "GAME"
+                            cursor_state = "DEFAULT"
+                            placed_drink_on_counter = None
 
-                    # Step 2: Grab empty cup
-                    elif engine.cups_stack_rect.collidepoint(mouse_pos):
-                        if cursor_state == "DEFAULT":
-                            cursor_state = "EMPTY_CUP"
+                        # Step 2: Grab empty cup
+                        elif engine.cups_stack_rect.collidepoint(mouse_pos):
+                            if cursor_state == "DEFAULT":
+                                cursor_state = "EMPTY_CUP"
 
-                    # Step 3: Fill empty cup
-                    elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                        cursor_state = "CHOCOLATE"
-                    elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                        cursor_state = "STRAWBERRY"
-                    elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                        cursor_state = "BOBA MILK TEA"
+                        # Step 3: Fill empty cup
+                        elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "CHOCOLATE"
+                        elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "STRAWBERRY"
+                        elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "MILK TEA"
 
-                    # Step 4: Place filled cup onto counter
-                    elif engine.counter_drop_rect.collidepoint(mouse_pos):
-                        if cursor_state in ["CHOCOLATE", "STRAWBERRY", "BOBA MILK TEA"]:
-                            placed_drink_on_counter = cursor_state
-                            cursor_state = "DEFAULT" 
+                        # Step 4: Place filled cup onto counter
+                        elif engine.counter_drop_rect.collidepoint(mouse_pos):
+                            if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA"]:
+                                placed_drink_on_counter = cursor_state
+                                cursor_state = "DEFAULT" 
 
-                    # Step 5: Serve cup via bell girl click
-                    elif engine.bell_girl_rect.collidepoint(mouse_pos):
-                        if placed_drink_on_counter is not None:
-                            engine.process_serving(placed_drink_on_counter)
-                            placed_drink_on_counter = None 
+                        # Step 5: Serve cup via bell girl click
+                        elif engine.bell_girl_rect.collidepoint(mouse_pos):
+                            if placed_drink_on_counter is not None:
+                                engine.process_serving(placed_drink_on_counter)
+                                placed_drink_on_counter = None 
 
-                elif state == "SETTINGS":
-                    if btn_set_back.is_clicked(mouse_pos): state = "MENU"
-                    elif btn_music.is_clicked(mouse_pos):
-                        music_playing = not music_playing
-                        pygame.mixer.music.unpause() if music_playing else pygame.mixer.music.pause()
-                        btn_music.text = f"MUSIC: {'ON' if music_playing else 'OFF'}"
-                    elif btn_vol_up.is_clicked(mouse_pos):
-                        volume = min(100, volume + 10); pygame.mixer.music.set_volume(volume/100)
-                    elif btn_vol_down.is_clicked(mouse_pos):
-                        volume = max(0, volume - 10); pygame.mixer.music.set_volume(volume/100)
-                
-                elif state in ["FURN_SHOP", "CAT_SHOP"]:
-                    if btn_shop_back.is_clicked(mouse_pos): state = "GAME"
-                    current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
-                    current_btns = furn_buttons if state == "FURN_SHOP" else cat_buttons
-                    for name, btn in current_btns.items():
-                        if btn.is_clicked(mouse_pos): engine.buy_item(name, "furniture" if state == "FURN_SHOP" else "cats")
+                    elif state == "SETTINGS":
+                        if btn_set_back.is_clicked(mouse_pos): state = "MENU"
+                        elif btn_music.is_clicked(mouse_pos):
+                            music_playing = not music_playing
+                            pygame.mixer.music.unpause() if music_playing else pygame.mixer.music.pause()
+                            btn_music.text = f"MUSIC: {'ON' if music_playing else 'OFF'}"
+                        elif btn_vol_up.is_clicked(mouse_pos):
+                            volume = min(100, volume + 10); pygame.mixer.music.set_volume(volume/100)
+                        elif btn_vol_down.is_clicked(mouse_pos):
+                            volume = max(0, volume - 10); pygame.mixer.music.set_volume(volume/100)
+                    
+                    elif state in ["FURN_SHOP", "CAT_SHOP"]:
+                        if btn_shop_back.is_clicked(mouse_pos): state = "GAME"
+                        current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
+                        current_btns = furn_buttons if state == "FURN_SHOP" else cat_buttons
+                        for name, btn in current_btns.items():
+                            if btn.is_clicked(mouse_pos): engine.buy_item(name, "furniture" if state == "FURN_SHOP" else "cats")
+
+            # --- ADDED: INTERACTION RUNTIME EVENT BINDINGS ---
+            elif event.type == pygame.MOUSEMOTION:
+                if state == "GAME":
+                    engine.handle_mouse_move(mouse_pos)
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    if state == "GAME":
+                        engine.handle_mouse_up()
 
         # --- DRAWING PIPELINE ---
         if state == "MENU":
@@ -137,10 +150,20 @@ def main():
             btn_open_cats.draw(screen, font)
             btn_go_kitchen.draw(screen, font)
             
-            for shop in [engine.furniture_items, engine.cat_items]:
-                for name, data in shop.items():
-                    if data[2] > 0: 
-                        screen.blit(data[4], data[4].get_rect(center=data[3]))
+            # Draw Furniture
+            for name, data in engine.furniture_items.items():
+                if data[2] > 0: 
+                    screen.blit(data[4], data[4].get_rect(center=data[3]))
+            
+            # Draw Cats (Except the one being dragged right now)
+            for name, data in engine.cat_items.items():
+                if data[2] > 0 and name != engine.selected_cat: 
+                    screen.blit(data[4], data[4].get_rect(center=data[3]))
+
+            # Layer Sorting: Draw the dragged cat last so it floats above everything else
+            if engine.selected_cat:
+                dragged_data = engine.cat_items[engine.selected_cat]
+                screen.blit(dragged_data[4], dragged_data[4].get_rect(center=dragged_data[3]))
             
             counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, WHITE)
             screen.blit(counter_txt, (CX - counter_txt.get_width()//2, 30))
