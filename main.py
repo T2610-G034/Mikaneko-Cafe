@@ -1,9 +1,10 @@
 import pygame
 import sys
+import asset_loader
 from settings import *
 from sprites import MenuButton
 from game_logic import GameEngine
-import asset_loader
+from asset_loader import load_visual_assets
 
 def main():
     pygame.init()
