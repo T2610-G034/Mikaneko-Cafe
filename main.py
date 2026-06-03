@@ -3,7 +3,7 @@ import sys
 from settings import *
 from sprites import MenuButton
 from game_logic import GameEngine
-from asset_loader import load_visual_assets
+import asset_loader
 
 def main():
     pygame.init()
