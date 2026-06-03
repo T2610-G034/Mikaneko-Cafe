@@ -12,22 +12,21 @@ def initialize_audio(volume):
     except Exception as e:
         print(f"Music Error: {e}")
     return music_playing
-
 def load_visual_assets():
     try:
-        bg_img = pygame.image.load(get_path("cafe_1_background.png")).convert()
+        bg_img = pygame.image.load(get_path("images/cafe_1_background.png")).convert()
         bg_img = pygame.transform.scale(bg_img, (WIDTH, HEIGHT))
     except:
         bg_img = None
 
     try:
-        cursor_img = pygame.image.load(get_path("cursor_hand.png")).convert_alpha()
+        cursor_img = pygame.image.load(get_path("images/cursor_hand.png")).convert_alpha()
         cursor_img = pygame.transform.scale(cursor_img, (50, 50))
     except:
         cursor_img = None
 
     try:
-        kitchen_bg = pygame.image.load(get_path("kitchen_background.png")).convert()
+        kitchen_bg = pygame.image.load(get_path("images/kitchen_background.png")).convert()
         kitchen_bg = pygame.transform.scale(kitchen_bg, (WIDTH, HEIGHT))
     except:
         kitchen_bg = None
@@ -38,7 +37,7 @@ def load_visual_assets():
 
     # 1. Empty Cup
     try:
-        cursor_assets["EMPTY_CUP"] = pygame.image.load(get_path("cup_empty.png")).convert_alpha()
+        cursor_assets["EMPTY_CUP"] = pygame.image.load(get_path("images/cup_empty.png")).convert_alpha()
         cursor_assets["EMPTY_CUP"] = pygame.transform.scale(cursor_assets["EMPTY_CUP"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
@@ -47,7 +46,7 @@ def load_visual_assets():
 
     # 2. Chocolate Cup
     try:
-        cursor_assets["CHOCOLATE"] = pygame.image.load(get_path("cup_chocolate.png")).convert_alpha()
+        cursor_assets["CHOCOLATE"] = pygame.image.load(get_path("images/cup_chocolate.png")).convert_alpha()
         cursor_assets["CHOCOLATE"] = pygame.transform.scale(cursor_assets["CHOCOLATE"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
@@ -56,7 +55,7 @@ def load_visual_assets():
 
     # 3. Strawberry Cup
     try:
-        cursor_assets["STRAWBERRY"] = pygame.image.load(get_path("cup_strawberry.png")).convert_alpha()
+        cursor_assets["STRAWBERRY"] = pygame.image.load(get_path("images/cup_strawberry.png")).convert_alpha()
         cursor_assets["STRAWBERRY"] = pygame.transform.scale(cursor_assets["STRAWBERRY"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
@@ -65,7 +64,7 @@ def load_visual_assets():
 
     # 4. Boba Milk Tea Cup
     try:
-        cursor_assets["BOBA MILK TEA"] = pygame.image.load(get_path("cup_boba.png")).convert_alpha()
+        cursor_assets["BOBA MILK TEA"] = pygame.image.load(get_path("images/cup_boba.png")).convert_alpha()
         cursor_assets["BOBA MILK TEA"] = pygame.transform.scale(cursor_assets["BOBA MILK TEA"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
