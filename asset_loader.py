@@ -14,7 +14,7 @@ def initialize_audio(volume):
     return music_playing
 def load_visual_assets():
     try:
-        bg_img = pygame.image.load(get_path("images/.cafe_1_background.png")).convert()
+        bg_img = pygame.image.load(get_path("images/cafe_1_background.png")).convert()
         bg_img = pygame.transform.scale(bg_img, (WIDTH, HEIGHT))
     except:
         bg_img = None
