@@ -222,4 +222,192 @@ def main():
         clock.tick(FPS)
 
 if __name__ == "__main__":
+    main()    
+    btn_open_furn    = MenuButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
+    btn_open_cats    = MenuButton(WIDTH - 220, 85, 200, 50, "CATS", (173, 216, 230))
+    
+    btn_go_kitchen   = MenuButton(20, 90, 220, 50, "KITCHEN", GOLD)
+    btn_leave_kitchen = MenuButton(20, 20, 220, 50, "LEAVE", (200, 100, 100))
+    
+    btn_set_back     = MenuButton(20, 20, 150, 50, "BACK")
+    btn_music        = MenuButton(CX - 150, CY - 80, 300, 80, f"MUSIC: {'ON' if music_playing else 'OFF'}")
+    btn_vol_down     = MenuButton(CX - 240, CY + 40, 80, 80, "-")
+    btn_vol_up       = MenuButton(CX + 160, CY + 40, 80, 80, "+")
+    btn_shop_back    = MenuButton(20, 20, 150, 50, "BACK")
+
+    furn_buttons = {name: MenuButton(CX - 250, 220 + (i * 90), 500, 70, name) for i, name in enumerate(engine.furniture_items)}
+    cat_buttons = {name: MenuButton(CX - 250, 220 + (i * 90), 500, 70, name) for i, name in enumerate(engine.cat_items)}
+
+    while True:
+        mouse_pos = pygame.mouse.get_pos()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit(); sys.exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1: # Left Click Down
+                    if state == "MENU":
+                        if btn_start.is_clicked(mouse_pos): state = "GAME"
+                        elif btn_settings.is_clicked(mouse_pos): state = "SETTINGS"
+                        elif btn_quit.is_clicked(mouse_pos): pygame.quit(); sys.exit()
+                    
+                    elif state == "GAME":
+                        if btn_back_to_menu.is_clicked(mouse_pos): state = "MENU"
+                        elif btn_open_furn.is_clicked(mouse_pos): state = "FURN_SHOP"
+                        elif btn_open_cats.is_clicked(mouse_pos): state = "CAT_SHOP"
+                        elif btn_go_kitchen.is_clicked(mouse_pos): state = "KITCHEN"
+                        else:
+                            # Added: Evaluate cat object selection if UI button was missed
+                            engine.handle_mouse_down(mouse_pos)
+                    
+                    elif state == "KITCHEN":
+                        if btn_leave_kitchen.is_clicked(mouse_pos):
+                            state = "GAME"
+                            cursor_state = "DEFAULT"
+                            placed_drink_on_counter = None
+
+                        # Step 2: Grab empty cup
+                        elif engine.cups_stack_rect.collidepoint(mouse_pos):
+                            if cursor_state == "DEFAULT":
+                                cursor_state = "EMPTY_CUP"
+
+                        # Step 3: Fill empty cup
+                        elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "CHOCOLATE"
+                        elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "STRAWBERRY"
+                        elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                            cursor_state = "MILK TEA"
+
+                        # Step 4: Place filled cup onto counter
+                        elif engine.counter_drop_rect.collidepoint(mouse_pos):
+                            if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA"]:
+                                placed_drink_on_counter = cursor_state
+                                cursor_state = "DEFAULT" 
+
+                        # Step 5: Serve cup via bell girl click
+                        elif engine.bell_girl_rect.collidepoint(mouse_pos):
+                            if placed_drink_on_counter is not None:
+                                engine.process_serving(placed_drink_on_counter)
+                                placed_drink_on_counter = None 
+
+                    elif state == "SETTINGS":
+                        if btn_set_back.is_clicked(mouse_pos): state = "MENU"
+                        elif btn_music.is_clicked(mouse_pos):
+                            music_playing = not music_playing
+                            pygame.mixer.music.unpause() if music_playing else pygame.mixer.music.pause()
+                            btn_music.text = f"MUSIC: {'ON' if music_playing else 'OFF'}"
+                        elif btn_vol_up.is_clicked(mouse_pos):
+                            volume = min(100, volume + 10); pygame.mixer.music.set_volume(volume/100)
+                        elif btn_vol_down.is_clicked(mouse_pos):
+                            volume = max(0, volume - 10); pygame.mixer.music.set_volume(volume/100)
+                    
+                    elif state in ["FURN_SHOP", "CAT_SHOP"]:
+                        if btn_shop_back.is_clicked(mouse_pos): state = "GAME"
+                        current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
+                        current_btns = furn_buttons if state == "FURN_SHOP" else cat_buttons
+                        for name, btn in current_btns.items():
+                            if btn.is_clicked(mouse_pos): engine.buy_item(name, "furniture" if state == "FURN_SHOP" else "cats")
+
+            # --- ADDED: INTERACTION RUNTIME EVENT BINDINGS ---
+            elif event.type == pygame.MOUSEMOTION:
+                if state == "GAME":
+                    engine.handle_mouse_move(mouse_pos)
+
+            elif event.type == pygame.MOUSEBUTTONUP:
+                if event.button == 1:
+                    if state == "GAME":
+                        engine.handle_mouse_up()
+
+        # --- DRAWING PIPELINE ---
+        if state == "MENU":
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK)
+            title_surf = title_font.render("Mika Neko Cafe", True, BROWN)
+            screen.blit(title_surf, (CX - title_surf.get_width()//2, 100))
+            btn_start.draw(screen, font); btn_settings.draw(screen, font); btn_quit.draw(screen, font)
+        
+        elif state == "GAME":
+            pygame.mouse.set_visible(True)
+            if bg_img: screen.blit(bg_img, (0, 0))
+            else: screen.fill(GREEN_CAFE)
+
+            btn_back_to_menu.draw(screen, font)
+            btn_open_furn.draw(screen, font)
+            btn_open_cats.draw(screen, font)
+            btn_go_kitchen.draw(screen, font)
+            
+            # Draw Furniture
+            for name, data in engine.furniture_items.items():
+                if data[2] > 0: 
+                    screen.blit(data[4], data[4].get_rect(center=data[3]))
+            
+            # Draw Cats (Except the one being dragged right now)
+            for name, data in engine.cat_items.items():
+                if data[2] > 0 and name != engine.selected_cat: 
+                    screen.blit(data[4], data[4].get_rect(center=data[3]))
+
+            # Layer Sorting: Draw the dragged cat last so it floats above everything else
+            if engine.selected_cat:
+                dragged_data = engine.cat_items[engine.selected_cat]
+                screen.blit(dragged_data[4], dragged_data[4].get_rect(center=dragged_data[3]))
+            
+            counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, WHITE)
+            screen.blit(counter_txt, (CX - counter_txt.get_width()//2, 30))
+
+        elif state == "KITCHEN":
+            if kitchen_bg: 
+                screen.blit(kitchen_bg, (0, 0))
+            else: 
+                screen.fill((240, 200, 210))
+                pygame.draw.rect(screen, (150, 150, 150), (120, 260, 900, 30)) 
+                pygame.draw.rect(screen, (50, 160, 240), (240, 340, 410, 210)) 
+                pygame.draw.circle(screen, (200, 80, 80), (1100, 550), 35)      
+
+            btn_leave_kitchen.draw(screen, font)
+
+            tv_text = tv_font.render(f"ORDER: {engine.current_order}", True, (20, 40, 80))
+            screen.blit(tv_text, (445 - tv_text.get_width()//2, 420))
+
+            # Render drink image on the counter top surface if dropped
+            if placed_drink_on_counter is not None:
+                drink_surface = cursor_assets[placed_drink_on_counter]
+                screen.blit(drink_surface, (800, 490))
+
+            counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, BROWN)
+            screen.blit(counter_txt, (WIDTH - 250, 25))
+
+            # --- FIX: HARDWARE MOUSE HANDLING FOR DEFAULT STATE ---
+            if cursor_state == "DEFAULT":
+                pygame.mouse.set_visible(True) # Hardware cursor arrow displays normally
+            else:
+                pygame.mouse.set_visible(False) # Hide hardware mouse arrow
+                current_item_surface = cursor_assets[cursor_state]
+                # Centers the custom cup image directly under the crosshair of the cursor coordinates
+                screen.blit(current_item_surface, (mouse_pos[0] - 30, mouse_pos[1] - 30))
+
+        elif state == "SETTINGS":
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK)
+            btn_music.draw(screen, font); btn_vol_down.draw(screen, font); btn_vol_up.draw(screen, font); btn_set_back.draw(screen, font)
+            vol_label = font.render(f"VOLUME: {volume}%", True, BROWN)
+            screen.blit(vol_label, (CX - vol_label.get_width()//2, CY + 65))
+            
+        elif state in ["FURN_SHOP", "CAT_SHOP"]:
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK if state == "FURN_SHOP" else PASTEL_BLUE)
+            btn_shop_back.draw(screen, font)
+            current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
+            current_btns = furn_buttons if state == "FURN_SHOP" else cat_buttons
+            
+            for name, btn in current_btns.items():
+                price, _, owned, _, _ = current_shop[name]
+                btn.text = f"{name}: SOLD" if owned > 0 else f"{name}: {price} M"
+                btn.draw(screen, font)
+
+        pygame.display.flip()
+        clock.tick(FPS)
+
+if __name__ == "__main__":
     main()
