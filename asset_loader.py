@@ -32,9 +32,9 @@ def load_visual_assets():
     except:
         kitchen_bg = None
 
-    # --- UPDATED: REAL PNG CURSOR ASSET LOADER ---
+    # --- UPDATED: INCREASED SIZE BY 500% (60 * 5 = 300) ---
     cursor_assets = {}
-    cursor_size = (60, 60)
+    cursor_size = (300, 300)
 
     # 1. Empty Cup
     try:
@@ -42,7 +42,7 @@ def load_visual_assets():
         cursor_assets["EMPTY_CUP"] = pygame.transform.scale(cursor_assets["EMPTY_CUP"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
-        pygame.draw.rect(surf, (200, 200, 250), (10, 10, 40, 40), border_radius=5)
+        pygame.draw.rect(surf, (200, 200, 250), (50, 50, 200, 200), border_radius=25)
         cursor_assets["EMPTY_CUP"] = surf
 
     # 2. Chocolate Cup
@@ -51,7 +51,7 @@ def load_visual_assets():
         cursor_assets["CHOCOLATE"] = pygame.transform.scale(cursor_assets["CHOCOLATE"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
-        pygame.draw.rect(surf, (101, 67, 33), (10, 10, 40, 40), border_radius=5)
+        pygame.draw.rect(surf, (101, 67, 33), (50, 50, 200, 200), border_radius=25)
         cursor_assets["CHOCOLATE"] = surf
 
     # 3. Strawberry Cup
@@ -60,7 +60,7 @@ def load_visual_assets():
         cursor_assets["STRAWBERRY"] = pygame.transform.scale(cursor_assets["STRAWBERRY"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
-        pygame.draw.rect(surf, (255, 182, 193), (10, 10, 40, 40), border_radius=5)
+        pygame.draw.rect(surf, (255, 182, 193), (50, 50, 200, 200), border_radius=25)
         cursor_assets["STRAWBERRY"] = surf
 
     # 4. Milk TeaBoba  Cup
@@ -69,7 +69,29 @@ def load_visual_assets():
         cursor_assets["MILK TEA"] = pygame.transform.scale(cursor_assets["MILK TEA"], cursor_size)
     except:
         surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
-        pygame.draw.rect(surf, (245, 222, 179), (10, 10, 40, 40), border_radius=5)
+        pygame.draw.rect(surf, (245, 222, 179), (50, 50, 200, 200), border_radius=25)
         cursor_assets["MILK TEA"] = surf
 
     return bg_img, cursor_img, kitchen_bg, cursor_assets
+
+def load_audio_assets():
+    """Loads and returns sound effects safely with fallback silent objects if missing."""
+    sfx = {}
+    
+    sfx_files = {
+        "meow1": "meow1.mp3",
+        "meow2": "meow2.mp3",
+        "meow3": "meow3.mp3",
+        "cup": "cup.mp3",
+        "liquid": "liquid.mp3",
+        "bell": "bell.mp3"
+    }
+    
+    for key, filename in sfx_files.items():
+        try:
+            sfx[key] = pygame.mixer.Sound(get_path(filename))
+        except Exception as e:
+            print(f"SFX Warning: Could not load {filename}, using silent fallback. ({e})")
+            sfx[key] = None
+            
+    return sfx
