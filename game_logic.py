@@ -33,14 +33,12 @@ class GameEngine:
         self.current_order = None
         self.reroll_order()
 
-        # Visual Colliders directly matching your kitchen layout photo: Rect(x, y, width, height)
         self.cups_stack_rect = pygame.Rect(750, 40, 250, 200)      # Pyramid stack top right
         self.dispenser_left = pygame.Rect(210, 20, 150, 240)       # Tea Dispenser
         self.dispenser_middle = pygame.Rect(365, 20, 150, 240)     # Strawberry Dispenser
         self.dispenser_right = pygame.Rect(520, 20, 150, 240)      # Chocolate Dispenser
         self.counter_drop_rect = pygame.Rect(650, 480, 400, 100)   # Flat space right side of TV
-        self.bell_girl_rect = pygame.Rect(1060, 490, 80, 120)      # Little girl placement spot
-
+        self.bell_girl_rect = pygame.Rect(1060, 490, 80, 120)      
         # --- ADDED DRAG AND DROP RUNTIME STATE ---
         self.selected_cat = None
         self.offset_x = 0
