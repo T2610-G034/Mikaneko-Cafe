@@ -32,7 +32,6 @@ def load_visual_assets():
     except:
         kitchen_bg = None
 
-    # --- UPDATED: INCREASED SIZE BY 500% (60 * 5 = 300) ---
     cursor_assets = {}
     cursor_size = (300, 300)
 
@@ -63,7 +62,7 @@ def load_visual_assets():
         pygame.draw.rect(surf, (255, 182, 193), (50, 50, 200, 200), border_radius=25)
         cursor_assets["STRAWBERRY"] = surf
 
-    # 4. Milk TeaBoba  Cup
+    # 4. Milk Tea/Boba Cup
     try:
         cursor_assets["MILK TEA"] = pygame.image.load(get_path("cup_boba.png")).convert_alpha()
         cursor_assets["MILK TEA"] = pygame.transform.scale(cursor_assets["MILK TEA"], cursor_size)
@@ -72,26 +71,55 @@ def load_visual_assets():
         pygame.draw.rect(surf, (245, 222, 179), (50, 50, 200, 200), border_radius=25)
         cursor_assets["MILK TEA"] = surf
 
+    # --- LEVEL 2 CURSOR ASSET FALLBACK SURFACES ---
+    # Coffee
+    surf_coffee = pygame.Surface(cursor_size, pygame.SRCALPHA)
+    pygame.draw.rect(surf_coffee, (72, 44, 25), (50, 50, 200, 200), border_radius=25)
+    cursor_assets["COFFEE"] = surf_coffee
+
+    # Tea
+    surf_tea = pygame.Surface(cursor_size, pygame.SRCALPHA)
+    pygame.draw.rect(surf_tea, (218, 165, 32), (50, 50, 200, 200), border_radius=25)
+    cursor_assets["TEA"] = surf_tea
+
+    # Polo Bun Butter
+    surf_polo = pygame.Surface(cursor_size, pygame.SRCALPHA)
+    pygame.draw.rect(surf_polo, (244, 208, 63), (50, 50, 200, 200), border_radius=25)
+    cursor_assets["POLO BUN BUTTER"] = surf_polo
+
+    # Croissant
+    surf_croissant = pygame.Surface(cursor_size, pygame.SRCALPHA)
+    pygame.draw.rect(surf_croissant, (211, 138, 62), (50, 50, 200, 200), border_radius=25)
+    cursor_assets["CROISSANT"] = surf_croissant
+
     return bg_img, cursor_img, kitchen_bg, cursor_assets
 
 def load_audio_assets():
     """Loads and returns sound effects safely with fallback silent objects if missing."""
     sfx = {}
-    
     sfx_files = {
-        "meow1": "meow1.mp3",
-        "meow2": "meow2.mp3",
-        "meow3": "meow3.mp3",
-        "cup": "cup.mp3",
-        "liquid": "liquid.mp3",
-        "bell": "bell.mp3"
+        "meow1": "meow1.mp3", "meow2": "meow2.mp3", "meow3": "meow3.mp3",
+        "cup": "cup.mp3", "liquid": "liquid.mp3", "bell": "bell.mp3"
     }
-    
     for key, filename in sfx_files.items():
         try:
             sfx[key] = pygame.mixer.Sound(get_path(filename))
-        except Exception as e:
-            print(f"SFX Warning: Could not load {filename}, using silent fallback. ({e})")
+        except:
             sfx[key] = None
-            
     return sfx
+
+def load_level_2_backgrounds():
+    """Safely loads and returns Level 2 specific backgrounds."""
+    try:
+        bg_img_2 = pygame.image.load(get_path("cafe_2_background.jpg")).convert()
+        bg_img_2 = pygame.transform.scale(bg_img_2, (WIDTH, HEIGHT))
+    except:
+        bg_img_2 = None
+
+    try:
+        kitchen_bg_2 = pygame.image.load(get_path("kitchen_2_background.png")).convert()
+        kitchen_bg_2 = pygame.transform.scale(kitchen_bg_2, (WIDTH, HEIGHT))
+    except:
+        kitchen_bg_2 = None
+
+    return bg_img_2, kitchen_bg_2
