@@ -1,5 +1,7 @@
 import pygame
 import random
+import json
+import os
 from path_helper import get_path
 
 class GameEngine:
@@ -7,13 +9,15 @@ class GameEngine:
         # Game Currency
         self.mao_mao = 0
         
-        # Original Shop Data (Kept safe)
+        # Track which file slot is currently active (1, 2, or 3)
+        self.active_slot = 1
+        
+        # Original Shop Data
         self.furniture_items = {
             "CAT BED": [15, 0, 0, (400, 600), self.load_img("cat_bed.png", (180, 180))], 
             "PLANT":   [25, 0, 0, (160, 530), self.load_img("plant.png", (180, 180))],
         }
         
-        # FIXED: Spaced out X coordinates across the screen (200, 380, 560, 740, 920)
         self.cat_items = {
             "VANILLA CAT":    [10, 0, 0, (200, 620), self.load_img("cat_vanilla.png", (180, 180))],
             "GRAPE CAT":      [20, 0, 0, (380, 620), self.load_img("cat_grape.png", (180, 180))],
@@ -22,27 +26,31 @@ class GameEngine:
             "COOKIE CAT":     [50, 0, 0, (920, 620), self.load_img("cat_cookie.png", (180, 180))],
         }
 
-        # --- NEW KITCHEN MECHANICS ENGINE ---
-        # Drink configuration: [Price, Weighted Probability Range (Higher price = lower chance)]
+        # --- KITCHEN MECHANICS ENGINE ---
         self.drink_menu = {
-            "CHOCOLATE": {"price": 10, "weight": 50},      # 50% chance
-            "STRAWBERRY": {"price": 15, "weight": 35},     # 35% chance
-            "MILK TEA": {"price": 20, "weight": 15}        # 15% chance
+            "CHOCOLATE": {"price": 10, "weight": 50},      
+            "STRAWBERRY": {"price": 15, "weight": 35},     
+            "MILK TEA": {"price": 20, "weight": 15}        
         }
         
         self.current_order = None
         self.reroll_order()
 
-        self.cups_stack_rect = pygame.Rect(750, 40, 250, 200)      # Pyramid stack top right
-        self.dispenser_left = pygame.Rect(210, 20, 150, 240)       # Tea Dispenser
-        self.dispenser_middle = pygame.Rect(365, 20, 150, 240)     # Strawberry Dispenser
-        self.dispenser_right = pygame.Rect(520, 20, 150, 240)      # Chocolate Dispenser
-        self.counter_drop_rect = pygame.Rect(650, 480, 400, 100)   # Flat space right side of TV
+        self.cups_stack_rect = pygame.Rect(750, 40, 250, 200)      
+        self.dispenser_left = pygame.Rect(210, 20, 150, 240)       
+        self.dispenser_middle = pygame.Rect(365, 20, 150, 240)     
+        self.dispenser_right = pygame.Rect(520, 20, 150, 240)      
+        self.counter_drop_rect = pygame.Rect(650, 480, 400, 100)   
         self.bell_girl_rect = pygame.Rect(1060, 490, 80, 120)      
-        # --- ADDED DRAG AND DROP RUNTIME STATE ---
+        
+        # --- DRAG AND DROP RUNTIME STATE ---
         self.selected_cat = None
+        self.selected_furniture = None  
         self.offset_x = 0
         self.offset_y = 0
+
+        # --- AUTO LOAD DEFAULT SLOT 1 ON STARTUP ---
+        self.load_game(slot=1)
 
     def load_img(self, filename, size):
         try:
@@ -55,25 +63,22 @@ class GameEngine:
             return surf
 
     def reroll_order(self):
-        """Selects a new random drink order based on weighted probability values."""
         drinks = list(self.drink_menu.keys())
         weights = [self.drink_menu[d]["weight"] for d in drinks]
         self.current_order = random.choices(drinks, weights=weights, k=1)[0]
 
     def process_serving(self, filled_drink_type):
-        """Validates if the drink placed down matches the active television request."""
         target_drink = self.current_order
         drink_price = self.drink_menu[target_drink]["price"]
 
         if filled_drink_type == target_drink:
             self.mao_mao += drink_price
-            success = True
         else:
-            self.mao_mao = max(0, self.mao_mao - drink_price) # Penalize wallet balance
-            success = False
+            self.mao_mao = max(0, self.mao_mao - drink_price) 
 
-        self.reroll_order() # Instantly change order on screen
-        return success
+        self.reroll_order() 
+        self.save_game(self.active_slot)    
+        return True
 
     def buy_item(self, item_name, shop_type="furniture"):
         shop = self.furniture_items if shop_type == "furniture" else self.cat_items
@@ -81,29 +86,124 @@ class GameEngine:
         if self.mao_mao >= item[0] and item[2] < 1:
             self.mao_mao -= item[0]
             item[2] = 1 
+            self.save_game(self.active_slot)  
             return True
         return False
 
-    # --- ADDED INTERACTION ENGINE FOR DRAGGING ---
     def handle_mouse_down(self, mouse_pos):
-        """Check if we clicked on an owned cat using its visual tuple coordinates."""
         for name, data in reversed(self.cat_items.items()):
-            if data[2] > 0:  # If owned
-                # Match main.py center logic to check collision accurately
+            if data[2] > 0:  
                 img_rect = data[4].get_rect(center=data[3])
                 if img_rect.collidepoint(mouse_pos):
                     self.selected_cat = name
                     self.offset_x = data[3][0] - mouse_pos[0]
                     self.offset_y = data[3][1] - mouse_pos[1]
-                    break
+                    return  
+
+        for name, data in reversed(self.furniture_items.items()):
+            if data[2] > 0:  
+                img_rect = data[4].get_rect(center=data[3])
+                if img_rect.collidepoint(mouse_pos):
+                    self.selected_furniture = name
+                    self.offset_x = data[3][0] - mouse_pos[0]
+                    self.offset_y = data[3][1] - mouse_pos[1]
+                    return
 
     def handle_mouse_move(self, mouse_pos):
-        """Update the coordinate tuple dynamically inside your existing list structure."""
         if self.selected_cat:
             new_x = mouse_pos[0] + self.offset_x
             new_y = mouse_pos[1] + self.offset_y
             self.cat_items[self.selected_cat][3] = (new_x, new_y)
+            
+        elif self.selected_furniture:
+            new_x = mouse_pos[0] + self.offset_x
+            new_y = mouse_pos[1] + self.offset_y
+            self.furniture_items[self.selected_furniture][3] = (new_x, new_y)
 
     def handle_mouse_up(self):
-        """Release tracking safely."""
+        if self.selected_cat or self.selected_furniture:
+            self.save_game(self.active_slot)  
         self.selected_cat = None
+        self.selected_furniture = None
+
+    def get_filename(self, slot):
+        return f"savegame_slot{slot}.json"
+
+    # --- MULTI-SLOT CORE MECHANICS ---
+    def save_game(self, slot):
+        self.active_slot = slot
+        filename = self.get_filename(slot)
+        save_data = {
+            "mao_mao": self.mao_mao,
+            "furniture": {name: {"owned": data[2], "pos": data[3]} for name, data in self.furniture_items.items()},
+            "cats": {name: {"owned": data[2], "pos": data[3]} for name, data in self.cat_items.items()}
+        }
+        try:
+            with open(filename, "w") as f:
+                json.dump(save_data, f, indent=4)
+        except Exception as e:
+            print(f"Failed to save slot {slot}: {e}")
+
+    def load_game(self, slot):
+        filename = self.get_filename(slot)
+        if not os.path.exists(filename):
+            self.reset_state_variables()
+            self.active_slot = slot
+            return False
+            
+        try:
+            with open(filename, "r") as f:
+                save_data = json.load(f)
+                
+            self.mao_mao = save_data.get("mao_mao", 0)
+            self.active_slot = slot
+            
+            saved_furn = save_data.get("furniture", {})
+            for name, saved_props in saved_furn.items():
+                if name in self.furniture_items:
+                    self.furniture_items[name][2] = saved_props.get("owned", 0)
+                    self.furniture_items[name][3] = tuple(saved_props.get("pos", self.furniture_items[name][3]))
+                    
+            saved_cats = save_data.get("cats", {})
+            for name, saved_props in saved_cats.items():
+                if name in self.cat_items:
+                    self.cat_items[name][2] = saved_props.get("owned", 0)
+                    self.cat_items[name][3] = tuple(saved_props.get("pos", self.cat_items[name][3]))
+            return True
+        except Exception as e:
+            print(f"Error loading slot {slot}: {e}")
+            return False
+
+    def delete_save(self, slot):
+        filename = self.get_filename(slot)
+        if os.path.exists(filename):
+            try:
+                os.remove(filename)
+            except Exception as e:
+                print(f"Error removing file asset: {e}")
+
+        if slot == self.active_slot:
+            self.reset_state_variables()
+
+    def reset_state_variables(self):
+        self.mao_mao = 0
+        self.furniture_items["CAT BED"][2] = 0
+        self.furniture_items["CAT BED"][3] = (400, 600)
+        self.furniture_items["PLANT"][2] = 0
+        self.furniture_items["PLANT"][3] = (160, 530)
+
+        default_x_coords = [200, 380, 560, 740, 920]
+        for i, name in enumerate(self.cat_items):
+            self.cat_items[name][2] = 0
+            self.cat_items[name][3] = (default_x_coords[i], 620)
+
+    def get_slot_summary(self, slot):
+        filename = self.get_filename(slot)
+        if not os.path.exists(filename):
+            return "EMPTY SLOT"
+        try:
+            with open(filename, "r") as f:
+                data = json.load(f)
+                return f"Slot {slot}: {int(data.get('mao_mao', 0))} M"
+        except:
+            return "CORRUPTED"
