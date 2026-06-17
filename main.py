@@ -1,6 +1,7 @@
 import pygame
 import sys
 import random
+import os
 from settings import *
 from sprites import MenuButton
 from game_logic import GameEngine
@@ -32,10 +33,15 @@ def main():
     placed_drink_on_counter = None
 
     # --- BUTTON INITIALIZATION ---
-    btn_start        = MenuButton(CX - 150, CY - 100, 300, 80, "START GAME")
-    btn_settings     = MenuButton(CX - 150, CY + 10, 300, 80, "SETTINGS")
-    btn_quit         = MenuButton(CX - 150, CY + 120, 300, 80, "QUIT")
+    btn_start        = MenuButton(CX - 150, CY - 140, 300, 70, "START GAME")
+    btn_save_menu    = MenuButton(CX - 150, CY - 50, 300, 70, "MANAGE FILES", (230, 230, 250))
+    btn_settings     = MenuButton(CX - 150, CY + 40, 300, 70, "SETTINGS")
+    btn_quit         = MenuButton(CX - 150, CY + 130, 300, 70, "QUIT")
+    
     btn_back_to_menu = MenuButton(20, 20, 150, 50, "MENU")
+    
+    # FIXED: Widened layout container from 150 to 240 pixels so the slot name text completely fits
+    btn_save_game    = MenuButton(20, 160, 240, 50, "SAVE (SLOT 1)", (144, 238, 144))
     
     btn_open_furn    = MenuButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
     btn_open_cats    = MenuButton(WIDTH - 220, 85, 200, 50, "CATS", (173, 216, 230))
@@ -49,6 +55,22 @@ def main():
     btn_vol_up       = MenuButton(CX + 160, CY + 40, 80, 80, "+")
     btn_shop_back    = MenuButton(20, 20, 150, 50, "BACK")
 
+    # Save Management Controls
+    slot_buttons = {
+        1: MenuButton(CX - 250, CY - 150, 320, 65, "Slot 1"),
+        2: MenuButton(CX - 250, CY - 75, 320, 65, "Slot 2"),
+        3: MenuButton(CX - 250, CY - 0, 320, 65, "Slot 3")
+    }
+    
+    delete_buttons = {
+        1: MenuButton(CX + 90, CY - 150, 160, 65, "WIPE", (255, 99, 71)),
+        2: MenuButton(CX + 90, CY - 75, 160, 65, "WIPE", (255, 99, 71)),
+        3: MenuButton(CX + 90, CY - 0, 160, 65, "WIPE", (255, 99, 71))
+    }
+    
+    btn_manual_load   = MenuButton(CX - 250, CY + 90, 500, 65, "LOAD SELECTED SLOT", (144, 238, 144))
+    btn_save_back     = MenuButton(20, 20, 150, 50, "BACK")
+
     furn_buttons = {name: MenuButton(CX - 250, 220 + (i * 90), 500, 70, name) for i, name in enumerate(engine.furniture_items)}
     cat_buttons = {name: MenuButton(CX - 250, 220 + (i * 90), 500, 70, name) for i, name in enumerate(engine.cat_items)}
 
@@ -61,24 +83,50 @@ def main():
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if state == "GAME": engine.save_game(engine.active_slot)
                 pygame.quit(); sys.exit()
 
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.button == 1: # Left Click Down
+                if event.button == 1: 
                     if state == "MENU":
                         if btn_start.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "GAME"
+                        elif btn_save_menu.is_clicked(mouse_pos):
+                            play_ui_meow()
+                            state = "SAVE_MANAGER"
                         elif btn_settings.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "SETTINGS"
                         elif btn_quit.is_clicked(mouse_pos): 
                             pygame.quit(); sys.exit()
                     
+                    elif state == "SAVE_MANAGER":
+                        if btn_save_back.is_clicked(mouse_pos):
+                            play_ui_meow()
+                            state = "MENU"
+                            
+                        for slot, btn in slot_buttons.items():
+                            if btn.is_clicked(mouse_pos):
+                                play_ui_meow()
+                                engine.active_slot = slot
+                                
+                        for slot, btn in delete_buttons.items():
+                            if btn.is_clicked(mouse_pos):
+                                play_ui_meow()
+                                engine.delete_save(slot)
+                                
+                        if btn_manual_load.is_clicked(mouse_pos):
+                            play_ui_meow()
+                            engine.load_game(engine.active_slot)
+
                     elif state == "GAME":
                         if btn_back_to_menu.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "MENU"
+                        elif btn_save_game.is_clicked(mouse_pos):
+                            play_ui_meow()
+                            engine.save_game(engine.active_slot) 
                         elif btn_open_furn.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "FURN_SHOP"
@@ -98,13 +146,11 @@ def main():
                             cursor_state = "DEFAULT"
                             placed_drink_on_counter = None
 
-                        # Step 2: Grab empty cup
                         elif engine.cups_stack_rect.collidepoint(mouse_pos):
                             if cursor_state == "DEFAULT":
                                 cursor_state = "EMPTY_CUP"
                                 if sfx["cup"]: sfx["cup"].play()
 
-                        # Step 3: Fill empty cup
                         elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
                             cursor_state = "CHOCOLATE"
                             if sfx["liquid"]: sfx["liquid"].play()
@@ -115,14 +161,12 @@ def main():
                             cursor_state = "MILK TEA"
                             if sfx["liquid"]: sfx["liquid"].play()
 
-                        # Step 4: Place filled cup onto counter
                         elif engine.counter_drop_rect.collidepoint(mouse_pos):
                             if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA"]:
                                 placed_drink_on_counter = cursor_state
                                 cursor_state = "DEFAULT" 
                                 if sfx["cup"]: sfx["cup"].play()
 
-                        # Step 5: Serve cup via bell girl click
                         elif engine.bell_girl_rect.collidepoint(mouse_pos):
                             if placed_drink_on_counter is not None:
                                 engine.process_serving(placed_drink_on_counter)
@@ -156,7 +200,6 @@ def main():
                                 play_ui_meow()
                                 engine.buy_item(name, "furniture" if state == "FURN_SHOP" else "cats")
 
-            # --- INTERACTION RUNTIME EVENT BINDINGS ---
             elif event.type == pygame.MOUSEMOTION:
                 if state == "GAME":
                     engine.handle_mouse_move(mouse_pos)
@@ -172,7 +215,27 @@ def main():
             screen.fill(PASTEL_PINK)
             title_surf = title_font.render("Mika Neko Cafe", True, BROWN)
             screen.blit(title_surf, (CX - title_surf.get_width()//2, 100))
-            btn_start.draw(screen, font); btn_settings.draw(screen, font); btn_quit.draw(screen, font)
+            btn_start.draw(screen, font); btn_save_menu.draw(screen, font)
+            btn_settings.draw(screen, font); btn_quit.draw(screen, font)
+            
+        elif state == "SAVE_MANAGER":
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK)
+            
+            title_lbl = font.render(f"ACTIVE WORKING POSITION: SLOT {engine.active_slot}", True, BROWN)
+            screen.blit(title_lbl, (CX - title_lbl.get_width()//2, CY - 220))
+            
+            for slot, btn in slot_buttons.items():
+                summary = engine.get_slot_summary(slot)
+                btn.color = (173, 216, 230) if slot == engine.active_slot else (230, 230, 250)
+                btn.text = f"Slot {slot} ({summary})" if "EMPTY" not in summary else f"Slot {slot}: [EMPTY]"
+                btn.draw(screen, font)
+                
+            for slot, btn in delete_buttons.items():
+                btn.draw(screen, font)
+                
+            btn_manual_load.draw(screen, font)
+            btn_save_back.draw(screen, font)
         
         elif state == "GAME":
             pygame.mouse.set_visible(True)
@@ -184,17 +247,22 @@ def main():
             btn_open_cats.draw(screen, font)
             btn_go_kitchen.draw(screen, font)
             
-            # Draw Furniture
+            # Dynamically match label contents inside the clean layout box frame limits
+            btn_save_game.text = f"SAVE (SLOT {engine.active_slot})"
+            btn_save_game.draw(screen, font) 
+            
             for name, data in engine.furniture_items.items():
-                if data[2] > 0: 
+                if data[2] > 0 and name != getattr(engine, 'selected_furniture', None): 
                     screen.blit(data[4], data[4].get_rect(center=data[3]))
             
-            # Draw Cats (Except the one being dragged right now)
             for name, data in engine.cat_items.items():
                 if data[2] > 0 and name != engine.selected_cat: 
                     screen.blit(data[4], data[4].get_rect(center=data[3]))
 
-            # Layer Sorting: Draw the dragged cat last so it floats above everything else
+            if getattr(engine, 'selected_furniture', None):
+                dragged_furn_data = engine.furniture_items[engine.selected_furniture]
+                screen.blit(dragged_furn_data[4], dragged_furn_data[4].get_rect(center=dragged_furn_data[3]))
+
             if engine.selected_cat:
                 dragged_data = engine.cat_items[engine.selected_cat]
                 screen.blit(dragged_data[4], dragged_data[4].get_rect(center=dragged_data[3]))
@@ -216,7 +284,6 @@ def main():
             tv_text = tv_font.render(f"ORDER: {engine.current_order}", True, (20, 40, 80))
             screen.blit(tv_text, (445 - tv_text.get_width()//2, 420))
 
-            # --- UPDATED: Pushed X over to 725 to perfectly strike the right-hand side cursor position ---
             if placed_drink_on_counter is not None:
                 drink_surface = cursor_assets[placed_drink_on_counter]
                 screen.blit(drink_surface, (725, 390))
@@ -224,7 +291,6 @@ def main():
             counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, BROWN)
             screen.blit(counter_txt, (WIDTH - 250, 25))
 
-            # --- HARDWARE MOUSE HANDLING FOR DEFAULT STATE ---
             if cursor_state == "DEFAULT":
                 pygame.mouse.set_visible(True) 
             else:
