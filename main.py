@@ -20,7 +20,6 @@ def main():
     music_playing = asset_loader.initialize_audio(volume)
     bg_img, cursor_img, kitchen_bg, cursor_assets = asset_loader.load_visual_assets()
     
-    # --- FIXED FILE PATH EXTENSION (.jpg) ---
     try:
         bg_img_2 = pygame.image.load(asset_loader.get_path("cafe_2_background.png")).convert()
         bg_img_2 = pygame.transform.scale(bg_img_2, (WIDTH, HEIGHT))
@@ -44,8 +43,6 @@ def main():
 
     cursor_state = "DEFAULT" 
     placed_drink_on_counter = None
-    
-    # --- TUTORIAL POPUP TRACKING STATE ---
     show_kitchen_tutorial = False
 
     # --- BUTTON INITIALIZATION ---
@@ -53,11 +50,7 @@ def main():
     btn_save_menu    = MenuButton(CX - 150, CY - 50, 300, 70, "MANAGE FILES", (230, 230, 250))
     btn_settings     = MenuButton(CX - 150, CY + 40, 300, 70, "SETTINGS")
     btn_quit         = MenuButton(CX - 150, CY + 130, 300, 70, "QUIT")
-    
-    # Main Menu Instruction Continue Button
     btn_continue_instructions = MenuButton(CX - 150, HEIGHT - 90, 300, 60, "CONTINUE", GOLD)
-    
-    # Kitchen Instruction Continue Button (Pushed lower to make text room)
     btn_start_cooking = MenuButton(CX - 160, CY + 180, 320, 60, "START SERVING", GOLD)
     
     btn_back_to_menu = MenuButton(20, 20, 150, 50, "MENU")
@@ -155,7 +148,6 @@ def main():
                         elif btn_go_kitchen.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "KITCHEN"
-                            # Only show popup instructions if player is on Level 1
                             if engine.current_level == 1:
                                 show_kitchen_tutorial = True  
                         elif engine.get_progression_percentage() >= 1.0 and btn_next_level.is_clicked(mouse_pos):
@@ -230,10 +222,23 @@ def main():
                         current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
                         
                         for i, name in enumerate(current_shop):
-                            temp_btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
+                            target_buy_name = name
+                            if name in ["CAT BED 1", "CAT BED 2", "CAT BED 3", "CAT BED 4"]:
+                                if name != "CAT BED 1": 
+                                    continue 
+                                target_buy_name = "CAT BED 1"
+                                
+                            # Updated 2-Column layout for click detection in Furniture Shop
+                            if state == "FURN_SHOP":
+                                col = i % 2
+                                row = i // 2
+                                temp_btn = MenuButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
+                            else:
+                                temp_btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
+
                             if temp_btn.is_clicked(mouse_pos):
                                 play_ui_meow()
-                                engine.buy_item(name, "furniture" if state == "FURN_SHOP" else "cats")
+                                engine.buy_item(target_buy_name, "furniture" if state == "FURN_SHOP" else "cats")
 
             elif event.type == pygame.MOUSEMOTION:
                 if state == "GAME":
@@ -371,7 +376,6 @@ def main():
                 current_item_surface = cursor_assets[cursor_state]
                 screen.blit(current_item_surface, (mouse_pos[0] - 150, mouse_pos[1] - 150))
                 
-            # --- OVERLAY POPUP FOR KITCHEN INSTRUCTIONS ---
             if show_kitchen_tutorial:
                 pygame.mouse.set_visible(True)
                 
@@ -413,11 +417,25 @@ def main():
             btn_shop_back.draw(screen, font)
             current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
             
-            for i, name in enumerate(current_shop):
+            display_index = 0
+            for name in current_shop:
+                if name in ["CAT BED 2", "CAT BED 3", "CAT BED 4"]:
+                    continue
+                
                 price, _, owned, _, _ = current_shop[name]
-                btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
-                btn.text = f"{name}: SOLD" if owned > 0 else f"{name}: {price} M"
+                display_name = "CAT BED" if name == "CAT BED 1" else name
+                
+                # Updated 2-Column Grid Layout layout for the Furniture Shop menu
+                if state == "FURN_SHOP":
+                    col = display_index % 2
+                    row = display_index // 2
+                    btn = MenuButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
+                else:
+                    btn = MenuButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
+                
+                btn.text = f"{display_name}: SOLD" if owned > 0 else f"{display_name}: {price} M"
                 btn.draw(screen, font)
+                display_index += 1
 
         pygame.display.flip()
         clock.tick(FPS)

@@ -65,8 +65,14 @@ class GameEngine:
         else:
             # --- LEVEL 1 DEFAULT FURNITURE ---
             self.furniture_items = {
-                "CAT BED": [15, 0, 0, (400, 600), self.load_img("cat_bed.png", (180, 180))], 
-                "PLANT":   [25, 0, 0, (160, 530), self.load_img("plant.png", (180, 180))],
+                "CAT BED":            [15, 0, 0, (400, 600), self.load_img("cat_bed.PNG", (300, 300))], 
+                "PLANT":              [25, 0, 0, (160, 530), self.load_img("plant.PNG", (180, 180))],
+                "PLANT TABLE":        [10, 0, 0, (280, 550), self.load_img("planttable.PNG", (300, 300))],
+                "SCRATCHING POST":    [35, 0, 0, (850, 530), self.load_img("scratchingpost.PNG", (550, 550))],
+                "SKIBBLES":           [10, 0, 0, (520, 660), self.load_img("catfood.PNG", (350, 350))],
+                "SKIBBLES PACKET":    [40, 0, 0, (580, 640), self.load_img("catfoodpacket.PNG", (400, 400))],
+                "CAT HOUSE":          [40, 0, 0, (1020, 550), self.load_img("cathouse.PNG", (300, 200))],
+                "GLASS BOTTLE":  [15, 0, 0, (700, 480), self.load_img("bottledecorations.PNG", (200, 200))],
             }
             # --- LEVEL 1 DEFAULT DRINK MENU ---
             self.drink_menu = {
@@ -76,7 +82,7 @@ class GameEngine:
             }
             # --- LEVEL 1 DEFAULT CATS ---
             self.cat_items = {
-                "VANILLA CAT":    [10, 0, 0, (200, 620), self.load_img("cat_vanilla.png", (180, 180))],
+                "VANILLA CAT":    [10, 0, 0, (200, 620), self.load_img("cat_vanilla.PNG", (180, 180))],
                 "GRAPE CAT":      [20, 0, 0, (380, 620), self.load_img("cat_grape.png", (180, 180))],
                 "STRAWBERRY CAT": [30, 0, 0, (560, 620), self.load_img("cat_strawberry.png", (180, 180))],
                 "MATCHA CAT":     [40, 0, 0, (740, 620), self.load_img("cat_matcha.png", (180, 180))],
