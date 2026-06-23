@@ -35,7 +35,7 @@ def main():
         
     sfx = asset_loader.load_audio_assets()
 
-    font = pygame.font.SysFont("Arial", 30, bold=True)
+    font = pygame.font.SysFont("Arial", 24, bold=True)  
     title_font = pygame.font.SysFont("Arial", 100, bold=True)
     tv_font = pygame.font.SysFont("Comic Sans MS", 26, bold=True)
     
@@ -44,12 +44,21 @@ def main():
 
     cursor_state = "DEFAULT" 
     placed_drink_on_counter = None
+    
+    # --- TUTORIAL POPUP TRACKING STATE ---
+    show_kitchen_tutorial = False
 
     # --- BUTTON INITIALIZATION ---
     btn_start        = MenuButton(CX - 150, CY - 140, 300, 70, "START GAME")
     btn_save_menu    = MenuButton(CX - 150, CY - 50, 300, 70, "MANAGE FILES", (230, 230, 250))
     btn_settings     = MenuButton(CX - 150, CY + 40, 300, 70, "SETTINGS")
     btn_quit         = MenuButton(CX - 150, CY + 130, 300, 70, "QUIT")
+    
+    # Main Menu Instruction Continue Button
+    btn_continue_instructions = MenuButton(CX - 150, HEIGHT - 90, 300, 60, "CONTINUE", GOLD)
+    
+    # Kitchen Instruction Continue Button (Pushed lower to make text room)
+    btn_start_cooking = MenuButton(CX - 160, CY + 180, 320, 60, "START SERVING", GOLD)
     
     btn_back_to_menu = MenuButton(20, 20, 150, 50, "MENU")
     btn_save_game    = MenuButton(20, 160, 240, 50, "SAVE (SLOT 1)", (144, 238, 144))
@@ -99,7 +108,7 @@ def main():
                     if state == "MENU":
                         if btn_start.is_clicked(mouse_pos): 
                             play_ui_meow()
-                            state = "GAME"
+                            state = "INSTRUCTIONS" 
                         elif btn_save_menu.is_clicked(mouse_pos):
                             play_ui_meow()
                             state = "SAVE_MANAGER"
@@ -109,6 +118,11 @@ def main():
                         elif btn_quit.is_clicked(mouse_pos): 
                             pygame.quit(); sys.exit()
                     
+                    elif state == "INSTRUCTIONS":
+                        if btn_continue_instructions.is_clicked(mouse_pos):
+                            play_ui_meow()
+                            state = "GAME" 
+
                     elif state == "SAVE_MANAGER":
                         if btn_save_back.is_clicked(mouse_pos):
                             play_ui_meow()
@@ -141,6 +155,9 @@ def main():
                         elif btn_go_kitchen.is_clicked(mouse_pos): 
                             play_ui_meow()
                             state = "KITCHEN"
+                            # Only show popup instructions if player is on Level 1
+                            if engine.current_level == 1:
+                                show_kitchen_tutorial = True  
                         elif engine.get_progression_percentage() >= 1.0 and btn_next_level.is_clicked(mouse_pos):
                             play_ui_meow()
                             engine.advance_to_next_level()
@@ -148,42 +165,46 @@ def main():
                             engine.handle_mouse_down(mouse_pos)
                     
                     elif state == "KITCHEN":
-                        if btn_leave_kitchen.is_clicked(mouse_pos):
-                            play_ui_meow()
-                            state = "GAME"
-                            cursor_state = "DEFAULT"
-                            placed_drink_on_counter = None
+                        if show_kitchen_tutorial:
+                            if btn_start_cooking.is_clicked(mouse_pos):
+                                play_ui_meow()
+                                show_kitchen_tutorial = False
+                        else:
+                            if btn_leave_kitchen.is_clicked(mouse_pos):
+                                play_ui_meow()
+                                state = "GAME"
+                                cursor_state = "DEFAULT"
+                                placed_drink_on_counter = None
 
-                        elif engine.cups_stack_rect.collidepoint(mouse_pos):
-                            if cursor_state == "DEFAULT":
-                                cursor_state = "EMPTY_CUP"
-                                if sfx["cup"]: sfx["cup"].play()
+                            elif engine.cups_stack_rect.collidepoint(mouse_pos):
+                                if cursor_state == "DEFAULT":
+                                    cursor_state = "EMPTY_CUP"
+                                    if sfx["cup"]: sfx["cup"].play()
 
-                        # --- UPDATED MECHANICS FOR LEVEL 2 RECIPES ---
-                        elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                            cursor_state = "COFFEE" if engine.current_level >= 2 else "CHOCOLATE"
-                            if sfx["liquid"]: sfx["liquid"].play()
-                        elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                            cursor_state = "TEA" if engine.current_level >= 2 else "STRAWBERRY"
-                            if sfx["liquid"]: sfx["liquid"].play()
-                        elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                            if engine.current_level >= 2:
-                                cursor_state = "CROISSANT" if mouse_pos[1] < 140 else "POLO BUN BUTTER"
-                            else:
-                                cursor_state = "MILK TEA"
-                            if sfx["liquid"]: sfx["liquid"].play()
+                            elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                cursor_state = "COFFEE" if engine.current_level >= 2 else "CHOCOLATE"
+                                if sfx["liquid"]: sfx["liquid"].play()
+                            elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                cursor_state = "TEA" if engine.current_level >= 2 else "STRAWBERRY"
+                                if sfx["liquid"]: sfx["liquid"].play()
+                            elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                if engine.current_level >= 2:
+                                    cursor_state = "CROISSANT" if mouse_pos[1] < 140 else "POLO BUN BUTTER"
+                                else:
+                                    cursor_state = "MILK TEA"
+                                if sfx["liquid"]: sfx["liquid"].play()
 
-                        elif engine.counter_drop_rect.collidepoint(mouse_pos):
-                            if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA", "COFFEE", "TEA", "CROISSANT", "POLO BUN BUTTER"]:
-                                placed_drink_on_counter = cursor_state
-                                cursor_state = "DEFAULT" 
-                                if sfx["cup"]: sfx["cup"].play()
+                            elif engine.counter_drop_rect.collidepoint(mouse_pos):
+                                if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA", "COFFEE", "TEA", "CROISSANT", "POLO BUN BUTTER"]:
+                                    placed_drink_on_counter = cursor_state
+                                    cursor_state = "DEFAULT" 
+                                    if sfx["cup"]: sfx["cup"].play()
 
-                        elif engine.bell_girl_rect.collidepoint(mouse_pos):
-                            if placed_drink_on_counter is not None:
-                                engine.process_serving(placed_drink_on_counter)
-                                placed_drink_on_counter = None 
-                                if sfx["bell"]: sfx["bell"].play()
+                            elif engine.bell_girl_rect.collidepoint(mouse_pos):
+                                if placed_drink_on_counter is not None:
+                                    engine.process_serving(placed_drink_on_counter)
+                                    placed_drink_on_counter = None 
+                                    if sfx["bell"]: sfx["bell"].play()
 
                     elif state == "SETTINGS":
                         if btn_set_back.is_clicked(mouse_pos): 
@@ -208,7 +229,6 @@ def main():
                         
                         current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
                         
-                        # --- DYNAMIC INTERACTION CHECKS FOR VARIABLE SIZE MENUS ---
                         for i, name in enumerate(current_shop):
                             temp_btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
                             if temp_btn.is_clicked(mouse_pos):
@@ -233,6 +253,30 @@ def main():
             btn_start.draw(screen, font); btn_save_menu.draw(screen, font)
             btn_settings.draw(screen, font); btn_quit.draw(screen, font)
             
+        elif state == "INSTRUCTIONS":
+            pygame.mouse.set_visible(True)
+            screen.fill(PASTEL_PINK)
+            
+            instr_title = title_font.render("HOW TO PLAY", True, BROWN)
+            instr_title = pygame.transform.scale(instr_title, (int(instr_title.get_width()*0.5), int(instr_title.get_height()*0.5)))
+            screen.blit(instr_title, (CX - instr_title.get_width() // 2, 40))
+            
+            instructions_text = [
+                "1. Click the 'KITCHEN' button on the left side to prepare customer orders.",
+                "2. Fulfill the drink requests there to earn Mao-Mao currency!",
+                "3. Use your Mao-Maos to buy upgrades from the 'CATS' menu.",
+                "4. Open the 'FURNITURES' menu anytime to buy and place cute decoration items.",
+                "5. Remember to click the green 'SAVE' button regularly to preserve your game progress!",
+                "6. Press WIPE on a save slot to delete it if you want to start fresh.",
+                "7. You cannot go back to a previous level once you advance, so make sure to save before moving on!"
+            ]
+            
+            for index, line in enumerate(instructions_text):
+                line_surface = font.render(line, True, BROWN)
+                screen.blit(line_surface, (CX - line_surface.get_width() // 2, 160 + (index * 65)))
+                
+            btn_continue_instructions.draw(screen, font)
+        
         elif state == "SAVE_MANAGER":
             pygame.mouse.set_visible(True)
             screen.fill(PASTEL_PINK)
@@ -253,7 +297,6 @@ def main():
         elif state == "GAME":
             pygame.mouse.set_visible(True)
             
-            # --- FIXED DYNAMIC LOOK-UP ---
             if engine.current_level >= 2 and bg_img_2:
                 screen.blit(bg_img_2, (0, 0))
             elif bg_img:
@@ -302,7 +345,6 @@ def main():
             screen.blit(counter_txt, (CX - counter_txt.get_width()//2, 60))
 
         elif state == "KITCHEN":
-            # --- FIXED DYNAMIC BACKGROUND SWAPPER ---
             if engine.current_level >= 2 and kitchen_bg_2:
                 screen.blit(kitchen_bg_2, (0, 0))
             elif kitchen_bg: 
@@ -323,12 +365,40 @@ def main():
             screen.blit(counter_txt, (WIDTH - 250, 25))
 
             if cursor_state == "DEFAULT":
-                pygame.mouse.set_visible(True) \
-
+                pygame.mouse.set_visible(True)
             else:
                 pygame.mouse.set_visible(False) 
                 current_item_surface = cursor_assets[cursor_state]
                 screen.blit(current_item_surface, (mouse_pos[0] - 150, mouse_pos[1] - 150))
+                
+            # --- OVERLAY POPUP FOR KITCHEN INSTRUCTIONS ---
+            if show_kitchen_tutorial:
+                pygame.mouse.set_visible(True)
+                
+                overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
+                overlay.fill((0, 0, 0, 180))
+                screen.blit(overlay, (0, 0))
+                
+                popup_box = pygame.Rect(CX - 540, CY - 280, 1080, 560)
+                pygame.draw.rect(screen, PASTEL_PINK, popup_box, border_radius=15)
+                pygame.draw.rect(screen, BROWN, popup_box, width=5, border_radius=15)
+                
+                popup_title = font.render("DRINK PREPARATION TUTORIAL", True, BROWN)
+                screen.blit(popup_title, (CX - popup_title.get_width() // 2, CY - 240))
+                
+                kitchen_steps = [
+                    "1. Match the drink request shown on your TV monitor screen.",
+                    "2. Click the stack of empty cups found on the top-right shelving unit.",
+                    "3. Click the correct beverage dispenser tubes to mix up your items.",
+                    "4. Drop the prepared cup directly down onto the tray.",
+                    "5. Ring the golden bell to serve and get paid!"
+                ]
+                
+                for idx, text_step in enumerate(kitchen_steps):
+                    step_surf = font.render(text_step, True, (40, 30, 25))
+                    screen.blit(step_surf, (CX - step_surf.get_width() // 2, CY - 130 + (idx * 55)))
+                    
+                btn_start_cooking.draw(screen, font)
 
         elif state == "SETTINGS":
             pygame.mouse.set_visible(True)
@@ -343,7 +413,6 @@ def main():
             btn_shop_back.draw(screen, font)
             current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
             
-            # --- GENERATE SHOP BUTTON LABELS ON THE FLY ---
             for i, name in enumerate(current_shop):
                 price, _, owned, _, _ = current_shop[name]
                 btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
