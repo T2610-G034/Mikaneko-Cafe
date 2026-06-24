@@ -65,14 +65,19 @@ class GameEngine:
         else:
             # --- LEVEL 1 DEFAULT FURNITURE ---
             self.furniture_items = {
-                "CAT BED":            [15, 0, 0, (400, 600), self.load_img("cat_bed.PNG", (300, 300))], 
+                "CAT BED 1":          [15, 0, 0, (350, 600), self.load_img("cat_bed.PNG", (300, 300))], 
+                "CAT BED 2":          [15, 0, 0, (420, 600), self.load_img("cat_bed.PNG", (300, 300))], 
+                "CAT BED 3":          [15, 0, 0, (490, 600), self.load_img("cat_bed.PNG", (300, 300))], 
                 "PLANT":              [25, 0, 0, (160, 530), self.load_img("plant.PNG", (180, 180))],
-                "PLANT TABLE":        [10, 0, 0, (280, 550), self.load_img("planttable.PNG", (300, 300))],
+                "PLANT TABLE 1":      [10, 0, 0, (280, 550), self.load_img("planttable.PNG", (300, 300))],
+                "PLANT TABLE 2":      [10, 0, 0, (620, 550), self.load_img("planttable.PNG", (300, 300))],
                 "SCRATCHING POST":    [35, 0, 0, (850, 530), self.load_img("scratchingpost.PNG", (550, 550))],
                 "SKIBBLES":           [10, 0, 0, (520, 660), self.load_img("catfood.PNG", (350, 350))],
-                "SKIBBLES PACKET":    [40, 0, 0, (580, 640), self.load_img("catfoodpacket.PNG", (400, 400))],
-                "CAT HOUSE":          [40, 0, 0, (1020, 550), self.load_img("cathouse.PNG", (300, 200))],
-                "GLASS BOTTLE":  [15, 0, 0, (700, 480), self.load_img("bottledecorations.PNG", (200, 200))],
+                "SKIBBLES PACKET":    [40, 0, 0, (720, 640), self.load_img("catfoodpacket.PNG", (400, 400))],
+                "CAT HOUSE 1":        [40, 0, 0, (1020, 550), self.load_img("cathouse.PNG", (300, 200))],
+                "CAT HOUSE 2":        [40, 0, 0, (1090, 550), self.load_img("cathouse.PNG", (300, 200))],
+                "CAT HOUSE 3":        [40, 0, 0, (1160, 550), self.load_img("cathouse.PNG", (300, 200))],
+                "GLASS BOTTLE":       [15, 0, 0, (780, 480), self.load_img("bottledecorations.PNG", (200, 200))],
             }
             # --- LEVEL 1 DEFAULT DRINK MENU ---
             self.drink_menu = {
@@ -112,7 +117,22 @@ class GameEngine:
             item = shop[item_name]
             if self.mao_mao >= item[0] and item[2] < 1:
                 self.mao_mao -= item[0]
-                item[2] = 1 
+                
+                # Bundle Purchase Logic
+                if item_name == "CAT BED 1":
+                    if "CAT BED 1" in shop: shop["CAT BED 1"][2] = 1
+                    if "CAT BED 2" in shop: shop["CAT BED 2"][2] = 1
+                    if "CAT BED 3" in shop: shop["CAT BED 3"][2] = 1
+                elif item_name == "CAT HOUSE 1":
+                    if "CAT HOUSE 1" in shop: shop["CAT HOUSE 1"][2] = 1
+                    if "CAT HOUSE 2" in shop: shop["CAT HOUSE 2"][2] = 1
+                    if "CAT HOUSE 3" in shop: shop["CAT HOUSE 3"][2] = 1
+                elif item_name == "PLANT TABLE 1":
+                    if "PLANT TABLE 1" in shop: shop["PLANT TABLE 1"][2] = 1
+                    if "PLANT TABLE 2" in shop: shop["PLANT TABLE 2"][2] = 1
+                else:
+                    item[2] = 1 
+                
                 self.save_game(self.active_slot)  
                 return True
         return False

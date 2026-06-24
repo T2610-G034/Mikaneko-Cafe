@@ -221,24 +221,28 @@ def main():
                         
                         current_shop = engine.furniture_items if state == "FURN_SHOP" else engine.cat_items
                         
-                        for i, name in enumerate(current_shop):
-                            target_buy_name = name
-                            if name in ["CAT BED 1", "CAT BED 2", "CAT BED 3", "CAT BED 4"]:
-                                if name != "CAT BED 1": 
-                                    continue 
-                                target_buy_name = "CAT BED 1"
+                        display_index = 0
+                        for name in current_shop:
+                            if name in ["CAT BED 2", "CAT BED 3", "CAT BED 4", "CAT HOUSE 2", "CAT HOUSE 3", "PLANT TABLE 2"]:
+                                continue
                                 
-                            # Updated 2-Column layout for click detection in Furniture Shop
+                            target_buy_name = name
+                            if name == "CAT BED 1": target_buy_name = "CAT BED 1"
+                            elif name == "CAT HOUSE 1": target_buy_name = "CAT HOUSE 1"
+                            elif name == "PLANT TABLE 1": target_buy_name = "PLANT TABLE 1"
+                                
                             if state == "FURN_SHOP":
-                                col = i % 2
-                                row = i // 2
+                                col = display_index % 2
+                                row = display_index // 2
                                 temp_btn = MenuButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
                             else:
-                                temp_btn = MenuButton(CX - 250, 220 + (i * 90), 500, 70, name)
+                                temp_btn = MenuButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
 
                             if temp_btn.is_clicked(mouse_pos):
                                 play_ui_meow()
                                 engine.buy_item(target_buy_name, "furniture" if state == "FURN_SHOP" else "cats")
+                            
+                            display_index += 1
 
             elif event.type == pygame.MOUSEMOTION:
                 if state == "GAME":
@@ -419,13 +423,20 @@ def main():
             
             display_index = 0
             for name in current_shop:
-                if name in ["CAT BED 2", "CAT BED 3", "CAT BED 4"]:
+                if name in ["CAT BED 2", "CAT BED 3", "CAT BED 4", "CAT HOUSE 2", "CAT HOUSE 3", "PLANT TABLE 2"]:
                     continue
                 
                 price, _, owned, _, _ = current_shop[name]
-                display_name = "CAT BED" if name == "CAT BED 1" else name
                 
-                # Updated 2-Column Grid Layout layout for the Furniture Shop menu
+                if name == "CAT BED 1":
+                    display_name = "CAT BED"
+                elif name == "CAT HOUSE 1":
+                    display_name = "CAT HOUSE"
+                elif name == "PLANT TABLE 1":
+                    display_name = "PLANT TABLE"
+                else:
+                    display_name = name
+                
                 if state == "FURN_SHOP":
                     col = display_index % 2
                     row = display_index // 2
