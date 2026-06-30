@@ -3,7 +3,7 @@ import sys
 import random
 import os
 from settings import *
-from sprites import MenuButton
+from sprites import MenuButton, TextButton
 from game_logic import GameEngine
 import asset_loader
 
@@ -12,7 +12,6 @@ def main():
     pygame.mixer.init() 
     
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
-    pygame.display.set_caption("Mika Neko Cafe")
     clock = pygame.time.Clock()
     
     # --- SETUP STATE & ASSETS ---
@@ -46,43 +45,45 @@ def main():
     show_kitchen_tutorial = False
 
     # --- BUTTON INITIALIZATION ---
-    btn_start        = MenuButton(CX - 150, CY - 140, 300, 70, "START GAME")
-    btn_save_menu    = MenuButton(CX - 150, CY - 50, 300, 70, "MANAGE FILES", (230, 230, 250))
-    btn_settings     = MenuButton(CX - 150, CY + 40, 300, 70, "SETTINGS")
-    btn_quit         = MenuButton(CX - 150, CY + 130, 300, 70, "QUIT")
-    btn_continue_instructions = MenuButton(CX - 150, HEIGHT - 90, 300, 60, "CONTINUE", GOLD)
-    btn_start_cooking = MenuButton(CX - 160, CY + 180, 320, 60, "START SERVING", GOLD)
-    
-    btn_back_to_menu = MenuButton(20, 20, 150, 50, "MENU")
-    btn_save_game    = MenuButton(20, 160, 240, 50, "SAVE (SLOT 1)", (144, 238, 144))
-    
-    btn_open_furn    = MenuButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
-    btn_open_cats    = MenuButton(WIDTH - 220, 85, 200, 50, "CATS", (173, 216, 230))
-    
-    btn_go_kitchen   = MenuButton(20, 90, 220, 50, "KITCHEN", GOLD)
-    btn_leave_kitchen = MenuButton(20, 20, 220, 50, "LEAVE", (200, 100, 100))
-    
-    btn_set_back     = MenuButton(20, 20, 150, 50, "BACK")
-    btn_music        = MenuButton(CX - 150, CY - 80, 300, 80, f"MUSIC: {'ON' if music_playing else 'OFF'}")
-    btn_vol_down     = MenuButton(CX - 240, CY + 40, 80, 80, "-")
-    btn_vol_up       = MenuButton(CX + 160, CY + 40, 80, 80, "+")
-    btn_shop_back    = MenuButton(20, 20, 150, 50, "BACK")
-    btn_next_level   = MenuButton(CX + 160, 20, 180, 45, "NEXT CAFE ->", GOLD)
+    # --- MAIN MENU (image buttons) ---
+    btn_start     = MenuButton(CX - 700, CY - 440, 750, 400, "startgame.PNG")
+    btn_save_menu = MenuButton(CX + 30, CY - 460, 750, 500, "managefiles.PNG")
+    btn_settings  = MenuButton(CX - 690, CY - 20, 700, 400, "setting.PNG")
+    btn_quit      = MenuButton(CX + 40, CY - 50, 700, 500, "quit.PNG")
+
+# --- OTHER MENUS (text buttons) ---
+    btn_continue_instructions = TextButton(CX - 150, HEIGHT - 90, 300, 60, "CONTINUE", GOLD)
+    btn_start_cooking         = TextButton(CX - 160, CY + 180, 320, 60, "START SERVING", GOLD)
+
+    btn_back_to_menu = TextButton(20, 20, 150, 50, "MENU")
+    btn_save_game    = TextButton(20, 160, 240, 50, "SAVE (SLOT 1)", (144, 238, 144))
+    btn_open_furn    = TextButton(WIDTH - 220, 20, 200, 50, "FURNITURES", (255, 182, 193))
+    btn_open_cats    = TextButton(WIDTH - 226, 85, 200, 50, "CATS", (173, 216, 230))
+    btn_go_kitchen   = TextButton(20, 90, 220, 50, "KITCHEN", GOLD)
+    btn_leave_kitchen = TextButton(20, 20, 220, 50, "LEAVE", (200, 100, 100))
+    btn_set_back     = TextButton(20, 20, 150, 50, "BACK")
+    btn_music        = TextButton(CX - 150, CY - 80, 300, 80, f"MUSIC: {'ON' if music_playing else 'OFF'}")
+    btn_vol_down     = TextButton(CX - 240, CY + 40, 80, 80, "-")
+    btn_vol_up       = TextButton(CX + 160, CY + 40, 80, 80, "+")
+    btn_shop_back    = TextButton(20, 20, 150, 50, "BACK")
+    btn_next_level   = TextButton(CX + 160, 20, 180, 45, "NEXT CAFE ->", GOLD)
+
 
     slot_buttons = {
-        1: MenuButton(CX - 250, CY - 150, 320, 65, "Slot 1"),
-        2: MenuButton(CX - 250, CY - 75, 320, 65, "Slot 2"),
-        3: MenuButton(CX - 250, CY - 0, 320, 65, "Slot 3")
-    }
-    
+    1: TextButton(CX - 250, CY - 150, 320, 65, "Slot 1"),
+    2: TextButton(CX - 250, CY - 75, 320, 65, "Slot 2"),
+    3: TextButton(CX - 250, CY - 0, 320, 65, "Slot 3")
+}
+
     delete_buttons = {
-        1: MenuButton(CX + 90, CY - 150, 160, 65, "WIPE", (255, 99, 71)),
-        2: MenuButton(CX + 90, CY - 75, 160, 65, "WIPE", (255, 99, 71)),
-        3: MenuButton(CX + 90, CY - 0, 160, 65, "WIPE", (255, 99, 71))
-    }
-    
-    btn_manual_load   = MenuButton(CX - 250, CY + 90, 500, 65, "LOAD SELECTED SLOT", (144, 238, 144))
-    btn_save_back     = MenuButton(20, 20, 150, 50, "BACK")
+    1: TextButton(CX + 90, CY - 150, 160, 65, "WIPE", (255, 99, 71)),
+    2: TextButton(CX + 90, CY - 75, 160, 65, "WIPE", (255, 99, 71)),
+    3: TextButton(CX + 90, CY - 0, 160, 65, "WIPE", (255, 99, 71))
+}
+
+    btn_manual_load = TextButton(CX - 250, CY + 90, 500, 65, "LOAD SELECTED")
+    btn_save_back   = TextButton(20, 20, 150, 50, "BACK")
+
 
     def play_ui_meow():
         chosen_meow = random.choice(["meow1", "meow2", "meow3"])
@@ -234,9 +235,9 @@ def main():
                             if state == "FURN_SHOP":
                                 col = display_index % 2
                                 row = display_index // 2
-                                temp_btn = MenuButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
+                                temp_btn = TextButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
                             else:
-                                temp_btn = MenuButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
+                                temp_btn = TextButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
 
                             if temp_btn.is_clicked(mouse_pos):
                                 play_ui_meow()
@@ -255,12 +256,23 @@ def main():
 
         # --- DRAWING PIPELINE ---
         if state == "MENU":
-            pygame.mouse.set_visible(True)
-            screen.fill(PASTEL_PINK)
-            title_surf = title_font.render("Mika Neko Cafe", True, BROWN)
-            screen.blit(title_surf, (CX - title_surf.get_width()//2, 100))
-            btn_start.draw(screen, font); btn_save_menu.draw(screen, font)
-            btn_settings.draw(screen, font); btn_quit.draw(screen, font)
+             pygame.mouse.set_visible(True)
+
+    # Background
+             try:
+                 menu_bg = pygame.image.load(asset_loader.get_path("mainmenu_background.PNG")).convert()
+                 menu_bg = pygame.transform.scale(menu_bg, (WIDTH, HEIGHT))
+                 screen.blit(menu_bg, (0, 0))
+             except:
+                 screen.fill((255, 228, 225))  # fallback pastel pink
+
+    # Draw buttons
+             btn_start.draw(screen)
+             btn_save_menu.draw(screen)
+             btn_settings.draw(screen)
+             btn_quit.draw(screen)
+
+
             
         elif state == "INSTRUCTIONS":
             pygame.mouse.set_visible(True)
@@ -440,9 +452,9 @@ def main():
                 if state == "FURN_SHOP":
                     col = display_index % 2
                     row = display_index // 2
-                    btn = MenuButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
+                    btn = TextButton(CX - 270 + (col * 290), 180 + (row * 75), 260, 60, name)
                 else:
-                    btn = MenuButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
+                    btn = TextButton(CX - 250, 220 + (display_index * 90), 500, 70, name)
                 
                 btn.text = f"{display_name}: SOLD" if owned > 0 else f"{display_name}: {price} M"
                 btn.draw(screen, font)
