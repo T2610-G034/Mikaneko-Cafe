@@ -169,35 +169,71 @@ def main():
                                 cursor_state = "DEFAULT"
                                 placed_drink_on_counter = None
 
-                            elif engine.cups_stack_rect.collidepoint(mouse_pos):
-                                if cursor_state == "DEFAULT":
+                            # --- LEVEL 1 KITCHEN FLOW ---
+                            if engine.current_level < 2:
+                                if engine.cups_stack_rect.collidepoint(mouse_pos):
+                                    if cursor_state == "DEFAULT":
+                                        cursor_state = "EMPTY_CUP"
+                                        if sfx["cup"]: sfx["cup"].play()
+                                elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                    cursor_state = "CHOCOLATE"
+                                    if sfx["liquid"]: sfx["liquid"].play()
+                                elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                    cursor_state = "STRAWBERRY"
+                                    if sfx["liquid"]: sfx["liquid"].play()
+                                elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                    cursor_state = "MILK TEA"
+                                    if sfx["liquid"]: sfx["liquid"].play()
+                                elif engine.counter_drop_rect.collidepoint(mouse_pos):
+                                    if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA"]:
+                                        placed_drink_on_counter = cursor_state
+                                        cursor_state = "DEFAULT"
+                                        if sfx["cup"]: sfx["cup"].play()
+                                elif engine.bell_girl_rect.collidepoint(mouse_pos):
+                                    if placed_drink_on_counter is not None:
+                                        engine.process_serving(placed_drink_on_counter)
+                                        placed_drink_on_counter = None
+                                        if sfx["bell"]: sfx["bell"].play()
+
+                            # --- LEVEL 2 KITCHEN FLOW ---
+                            else:
+                                cm = engine.coffee_machine_rect
+                                kt = engine.kettle_rect
+
+                                # Step 1: pick up cup
+                                if engine.cups_stack_rect.collidepoint(mouse_pos) and cursor_state == "DEFAULT":
                                     cursor_state = "EMPTY_CUP"
                                     if sfx["cup"]: sfx["cup"].play()
 
-                            elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                                cursor_state = "COFFEE" if engine.current_level >= 2 else "CHOCOLATE"
-                                if sfx["liquid"]: sfx["liquid"].play()
-                            elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                                cursor_state = "TEA" if engine.current_level >= 2 else "STRAWBERRY"
-                                if sfx["liquid"]: sfx["liquid"].play()
-                            elif engine.dispenser_left.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
-                                if engine.current_level >= 2:
-                                    cursor_state = "CROISSANT" if mouse_pos[1] < 140 else "POLO BUN BUTTER"
-                                else:
-                                    cursor_state = "MILK TEA"
-                                if sfx["liquid"]: sfx["liquid"].play()
-
-                            elif engine.counter_drop_rect.collidepoint(mouse_pos):
-                                if cursor_state in ["CHOCOLATE", "STRAWBERRY", "MILK TEA", "COFFEE", "TEA", "CROISSANT", "POLO BUN BUTTER"]:
-                                    placed_drink_on_counter = cursor_state
-                                    cursor_state = "DEFAULT" 
+                                # Coffee: cup -> bag -> powder -> machine -> COFFEE
+                                elif engine.dispenser_right.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                    cursor_state = "COFFEE_POWDER"
                                     if sfx["cup"]: sfx["cup"].play()
+                                elif cm and cm.collidepoint(mouse_pos) and cursor_state == "COFFEE_POWDER":
+                                    cursor_state = "COFFEE"
+                                    if sfx["liquid"]: sfx["liquid"].play()
 
-                            elif engine.bell_girl_rect.collidepoint(mouse_pos):
-                                if placed_drink_on_counter is not None:
-                                    engine.process_serving(placed_drink_on_counter)
-                                    placed_drink_on_counter = None 
-                                    if sfx["bell"]: sfx["bell"].play()
+                                # Tea: cup -> bag -> powder -> kettle -> TEA
+                                elif engine.dispenser_middle.collidepoint(mouse_pos) and cursor_state == "EMPTY_CUP":
+                                    cursor_state = "TEA_POWDER"
+                                    if sfx["cup"]: sfx["cup"].play()
+                                elif kt and kt.collidepoint(mouse_pos) and cursor_state == "TEA_POWDER":
+                                    cursor_state = "TEA"
+                                    if sfx["liquid"]: sfx["liquid"].play()
+
+                                # Drop on counter
+                                elif engine.counter_drop_rect.collidepoint(mouse_pos):
+                                    if cursor_state in ["COFFEE", "TEA", "CROISSANT", "POLO BUN BUTTER"]:
+                                        placed_drink_on_counter = cursor_state
+                                        cursor_state = "DEFAULT"
+                                        if sfx["cup"]: sfx["cup"].play()
+
+                                # Ring bell to serve
+                                elif engine.bell_girl_rect.collidepoint(mouse_pos):
+                                    if placed_drink_on_counter is not None:
+                                        engine.process_serving(placed_drink_on_counter)
+                                        placed_drink_on_counter = None
+                                        if sfx["bell"]: sfx["bell"].play()
 
                     elif state == "SETTINGS":
                         if btn_set_back.is_clicked(mouse_pos): 
@@ -375,12 +411,14 @@ def main():
 
             btn_leave_kitchen.draw(screen, font)
 
+            draw_pos = engine.get_kitchen_draw_positions()
+
             tv_text = tv_font.render(f"ORDER: {engine.current_order}", True, (20, 40, 80))
-            screen.blit(tv_text, (445- tv_text.get_width()//2, 420))
+            screen.blit(tv_text, (draw_pos["order_text_center_x"] - tv_text.get_width()//2, draw_pos["order_text_y"]))
 
             if placed_drink_on_counter is not None:
                 drink_surface = cursor_assets[placed_drink_on_counter]
-                screen.blit(drink_surface, (725, 390))
+                screen.blit(drink_surface, draw_pos["drink_placement_pos"])
 
             counter_txt = font.render(f"Mao-Maos: {int(engine.mao_mao)}", True, BROWN)
             screen.blit(counter_txt, (WIDTH - 250, 25))
@@ -388,8 +426,11 @@ def main():
             if cursor_state == "DEFAULT":
                 pygame.mouse.set_visible(True)
             else:
-                pygame.mouse.set_visible(False) 
-                current_item_surface = cursor_assets[cursor_state]
+                pygame.mouse.set_visible(False)
+                render_state = cursor_state
+                if cursor_state == "EMPTY_CUP" and engine.current_level >= 2:
+                    render_state = "EMPTY_CUP_L2"
+                current_item_surface = cursor_assets[render_state]
                 screen.blit(current_item_surface, (mouse_pos[0] - 150, mouse_pos[1] - 150))
                 
             if show_kitchen_tutorial:
