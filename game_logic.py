@@ -3,6 +3,8 @@ import random
 import json
 import os
 from path_helper import get_path
+import level1
+import level2
 
 class GameEngine:
     def __init__(self):
@@ -17,13 +19,6 @@ class GameEngine:
         
         self.load_level_data()
 
-        self.cups_stack_rect = pygame.Rect(750, 40, 250, 200)      
-        self.dispenser_left = pygame.Rect(210, 20, 150, 240)       
-        self.dispenser_middle = pygame.Rect(365, 20, 150, 240)     
-        self.dispenser_right = pygame.Rect(520, 20, 150, 240)      
-        self.counter_drop_rect = pygame.Rect(650, 480, 400, 100)   
-        self.bell_girl_rect = pygame.Rect(1060, 490, 80, 120)      
-        
         self.selected_cat = None
         self.selected_furniture = None  
         self.offset_x = 0
@@ -43,60 +38,30 @@ class GameEngine:
 
     def load_level_data(self):
         """Replaces shop data dynamically based on the current active level."""
-        if self.current_level >= 2:
-            # --- LEVEL 2 FURNITURE, PRICES, & DIMENSIONS ---
-            self.furniture_items = {
-                "SETS OF HIGH CHAIR": [30, 0, 0, (680, 600), self.load_img("setsofhighchair.png", (280, 200))],
-                "SETS OF PLANT":      [20, 0, 0, (600, 480), self.load_img("setsofplant.png", (780, 340))],
-                "FAIRY LIGHTS":       [10, 0, 0, (280, 220), self.load_img("fairylights.png", (280, 90))],
-            }
-            # --- LEVEL 2 DRINK MENU ---
-            self.drink_menu = {
-                "COFFEE": {"price": 30, "weight": 35},      
-                "TEA": {"price": 35, "weight": 35},     
-                "POLO BUN BUTTER": {"price": 45, "weight": 15},
-                "CROISSANT": {"price": 50, "weight": 15}
-            }
-            # --- LEVEL 2 CATS ---
-            self.cat_items = {
-                "COFFEE CAT": [25, 0, 0, (200, 600), self.load_img("cat_coffee.png", (180, 180))],
-                "TEA CAT":   [50, 0, 0, (420, 600), self.load_img("cat_tea.png", (180, 180))],
-                "LEMONADE CAT":   [75, 0, 0, (640, 600), self.load_img("cat_lemonade.png", (180, 180))],
-                "CARAMEL PUDDING CAT":   [100, 0, 0, (860, 600), self.load_img("cat_caramel_pudding.png", (180, 180))],
-                "CAKE CAT":   [125, 0, 0, (1080, 600), self.load_img("cat_cake.png", (180, 180))]
-            }
-        else:
-            # --- LEVEL 1 DEFAULT FURNITURE ---
-            self.furniture_items = {
-                "CAT BED 1":          [15, 0, 0, (350, 600), self.load_img("cat_bed.PNG", (300, 300))], 
-                "CAT BED 2":          [15, 0, 0, (420, 600), self.load_img("cat_bed.PNG", (300, 300))], 
-                "CAT BED 3":          [15, 0, 0, (490, 600), self.load_img("cat_bed.PNG", (300, 300))], 
-                "PLANT":              [25, 0, 0, (160, 530), self.load_img("plant.PNG", (180, 180))],
-                "PLANT TABLE 1":      [10, 0, 0, (280, 550), self.load_img("planttable.PNG", (300, 300))],
-                "PLANT TABLE 2":      [10, 0, 0, (620, 550), self.load_img("planttable.PNG", (300, 300))],
-                "SCRATCHING POST":    [35, 0, 0, (850, 530), self.load_img("scratchingpost.PNG", (550, 550))],
-                "SKIBBLES":           [10, 0, 0, (520, 660), self.load_img("catfood.PNG", (350, 350))],
-                "SKIBBLES PACKET":    [40, 0, 0, (720, 640), self.load_img("catfoodpacket.PNG", (400, 400))],
-                "CAT HOUSE 1":        [40, 0, 0, (1020, 550), self.load_img("cathouse.PNG", (300, 200))],
-                "CAT HOUSE 2":        [40, 0, 0, (1090, 550), self.load_img("cathouse.PNG", (300, 200))],
-                "CAT HOUSE 3":        [40, 0, 0, (1160, 550), self.load_img("cathouse.PNG", (300, 200))],
-                "GLASS BOTTLE":       [15, 0, 0, (780, 480), self.load_img("bottledecorations.PNG", (200, 200))],
-            }
-            # --- LEVEL 1 DEFAULT DRINK MENU ---
-            self.drink_menu = {
-                "CHOCOLATE": {"price": 10, "weight": 50},      
-                "STRAWBERRY": {"price": 15, "weight": 35},     
-                "MILK TEA": {"price": 20, "weight": 15}        
-            }
-            # --- LEVEL 1 DEFAULT CATS ---
-            self.cat_items = {
-                "VANILLA CAT":    [10, 0, 0, (200, 620), self.load_img("cat_vanilla.PNG", (180, 180))],
-                "GRAPE CAT":      [20, 0, 0, (380, 620), self.load_img("cat_grape.png", (180, 180))],
-                "STRAWBERRY CAT": [30, 0, 0, (560, 620), self.load_img("cat_strawberry.png", (180, 180))],
-                "MATCHA CAT":     [40, 0, 0, (740, 620), self.load_img("cat_matcha.png", (180, 180))],
-                "COOKIE CAT":     [50, 0, 0, (920, 620), self.load_img("cat_cookie.png", (180, 180))],
-            }
+        level_module = level2 if self.current_level >= 2 else level1
+        self.furniture_items = level_module.get_furniture(self.load_img)
+        self.drink_menu = level_module.get_drink_menu()
+        self.cat_items = level_module.get_cat_items(self.load_img)
         self.reroll_order()
+        self.set_kitchen_layout()
+
+    def set_kitchen_layout(self):
+        """Defines kitchen hitbox rects to match the current level's background art."""
+        level_module = level2 if self.current_level >= 2 else level1
+        layout = level_module.get_kitchen_layout()
+        self.cups_stack_rect = layout["cups_stack_rect"]
+        self.dispenser_left = layout["dispenser_left"]
+        self.dispenser_middle = layout["dispenser_middle"]
+        self.dispenser_right = layout["dispenser_right"]
+        self.counter_drop_rect = layout["counter_drop_rect"]
+        self.bell_girl_rect = layout["bell_girl_rect"]
+        self.coffee_machine_rect = layout["coffee_machine_rect"]
+        self.kettle_rect = layout["kettle_rect"]
+
+    def get_kitchen_draw_positions(self):
+        """Returns where main.py should draw the order text and placed drink for this level."""
+        level_module = level2 if self.current_level >= 2 else level1
+        return level_module.get_kitchen_draw_positions()
 
     def reroll_order(self):
         drinks = list(self.drink_menu.keys())
