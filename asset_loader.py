@@ -72,15 +72,50 @@ def load_visual_assets():
         cursor_assets["MILK TEA"] = surf
 
     # --- LEVEL 2 CURSOR ASSET FALLBACK SURFACES ---
-    # Coffee
-    surf_coffee = pygame.Surface(cursor_size, pygame.SRCALPHA)
-    pygame.draw.rect(surf_coffee, (72, 44, 25), (50, 50, 200, 200), border_radius=25)
-    cursor_assets["COFFEE"] = surf_coffee
+    # Empty cup for level 2 (teapot-style cup)
+    try:
+        cursor_assets["EMPTY_CUP_L2"] = pygame.image.load(get_path("emptyteapotcup.png")).convert_alpha()
+        cursor_assets["EMPTY_CUP_L2"] = pygame.transform.scale(cursor_assets["EMPTY_CUP_L2"], cursor_size)
+    except:
+        surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
+        pygame.draw.rect(surf, (230, 230, 230), (50, 50, 200, 200), border_radius=25)
+        cursor_assets["EMPTY_CUP_L2"] = surf
 
-    # Tea
-    surf_tea = pygame.Surface(cursor_size, pygame.SRCALPHA)
-    pygame.draw.rect(surf_tea, (218, 165, 32), (50, 50, 200, 200), border_radius=25)
-    cursor_assets["TEA"] = surf_tea
+    # Coffee powder (intermediate step)
+    try:
+        cursor_assets["COFFEE_POWDER"] = pygame.image.load(get_path("coffeepowder.PNG")).convert_alpha()
+        cursor_assets["COFFEE_POWDER"] = pygame.transform.scale(cursor_assets["COFFEE_POWDER"], cursor_size)
+    except:
+        surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
+        pygame.draw.rect(surf, (90, 50, 20), (50, 50, 200, 200), border_radius=25)
+        cursor_assets["COFFEE_POWDER"] = surf
+
+    # Tea powder (intermediate step)
+    try:
+        cursor_assets["TEA_POWDER"] = pygame.image.load(get_path("teapowder.PNG")).convert_alpha()
+        cursor_assets["TEA_POWDER"] = pygame.transform.scale(cursor_assets["TEA_POWDER"], cursor_size)
+    except:
+        surf = pygame.Surface(cursor_size, pygame.SRCALPHA)
+        pygame.draw.rect(surf, (140, 100, 40), (50, 50, 200, 200), border_radius=25)
+        cursor_assets["TEA_POWDER"] = surf
+
+    # Coffee (final)
+    try:
+        cursor_assets["COFFEE"] = pygame.image.load(get_path("coffee.PNG")).convert_alpha()
+        cursor_assets["COFFEE"] = pygame.transform.scale(cursor_assets["COFFEE"], cursor_size)
+    except:
+        surf_coffee = pygame.Surface(cursor_size, pygame.SRCALPHA)
+        pygame.draw.rect(surf_coffee, (72, 44, 25), (50, 50, 200, 200), border_radius=25)
+        cursor_assets["COFFEE"] = surf_coffee
+
+    # Tea (final)
+    try:
+        cursor_assets["TEA"] = pygame.image.load(get_path("tea.PNG")).convert_alpha()
+        cursor_assets["TEA"] = pygame.transform.scale(cursor_assets["TEA"], cursor_size)
+    except:
+        surf_tea = pygame.Surface(cursor_size, pygame.SRCALPHA)
+        pygame.draw.rect(surf_tea, (218, 165, 32), (50, 50, 200, 200), border_radius=25)
+        cursor_assets["TEA"] = surf_tea
 
     # Polo Bun Butter
     surf_polo = pygame.Surface(cursor_size, pygame.SRCALPHA)
